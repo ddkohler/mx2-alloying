@@ -1,0 +1,37 @@
+## Core latex/pdflatex auxiliary files:
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+*.gz
+*.bbl
+*.blg
+*.pdf
+*.bib
+!database.bib
+
+# emacs
+flycheck_*.el
+.projectile
+*.#*
+
+# images
+*.png
+
+# vim
+*.sw?
+
+# WrightTools
+
+# python
+*.pyc
+
+*.wt5
+.vscode/settings.json
