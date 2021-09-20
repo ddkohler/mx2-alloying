@@ -5,9 +5,6 @@ import pathlib
 import matplotlib as mpl
 from scipy.interpolate import interp1d
 
-# here = pathlib.Path(__file__).resolve().parent
-# lit = wt.open(here / 'literature.wt5')
-
 
 def complexn_from_d(E, d, ncomplex=True):
     if ncomplex:
@@ -81,32 +78,3 @@ def e_semi_1D(E, E0s, Gs, As):
     Asnew = As[None, :]
     out = L(Enew, E0new, Gsnew, Asnew)
     return np.sum(out, axis=-1)
-
-
-def dRR_two_substrate(E, eunpump, epump, nsub1, nsub2, dsamp, dsub1, which="all"):
-    wl_vac = E_to_wl_nm(E)
-    n0 = np.ones(E.shape, dtype=complex)
-    n1 = np.sqrt(eunpump)
-    Runpump = R_three_layer(wl_vac, n0, n1, nsub1, nsub2, dsamp, dsub1)
-    n1 = np.sqrt(epump)
-    Rpump = R_three_layer(wl_vac, n0, n1, nsub1, nsub2, dsamp, dsub1)
-    dRR = (Rpump - Runpump) / Runpump
-    if which == "all":
-        return dRR, Runpump, Rpump
-    else:
-        return dRR
-
-
-def dRR_one_substrate(E, eunpump, epump, nsub, dsamp, which="all"):
-    wl_vac = E_to_wl_nm(E)
-    n0 = np.ones(E.shape, dtype=complex)
-    n1 = n0
-    n2 = np.sqrt(eunpump)
-    Runpump = R_three_layer(wl_vac, n0, n1, n2, nsub, 0.0, dsamp)
-    n2 = np.sqrt(epump)
-    Rpump = R_three_layer(wl_vac, n0, n1, n2, nsub, 0.0, dsamp)
-    dRR = (Rpump - Runpump) / Runpump
-    if which == "all":
-        return dRR, Runpump, Rpump
-    else:
-        return dRR

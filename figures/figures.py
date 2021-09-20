@@ -5,9 +5,11 @@ import pathlib
 import matplotlib.pyplot as plt
 import matplotlib
 import string
-from PIL import Image
 
-wt.close()
+
+all_plot = True
+save = True
+fig_type = ".png"
 
 here = pathlib.Path(__file__).resolve().parent
 data_dir = here.parent / "data"
@@ -21,16 +23,6 @@ try:
 except (ModuleNotFoundError, ImportError):
     import optical_model as om
 
-try:
-    from . import fitting as ft
-except (ModuleNotFoundError, ImportError):
-    import fitting as ft
-
-
-all_plot = False
-save = False
-
-fig_type = ".png"
 
 if False:
     wt.artists.apply_rcparams(kind="publication")
@@ -40,7 +32,6 @@ if False:
 
 
 alph = list(string.ascii_lowercase)
-
 
 c_Mo = "m"
 c_W = "c"
@@ -218,43 +209,16 @@ if all_plot:
 
 if all_plot:
     p = here.parent / "fitting" / "fit_PL.wt5"
-    cfit = wt.open(p)
-    dfit = cfit["proc_PL"].copy(verbose=False)
     d = root.PL.proc_PL.copy(verbose=False)
-    # mask
-    arr = d.intensity[:]
-    arr_collapse = np.mean(arr, axis=0)
-    mask = np.ones(arr_collapse.shape)
-    mask[arr_collapse < arr_collapse.max() * .04] = 0
-    nanmask = np.ones(arr_collapse.shape)
-    nanmask[arr_collapse < arr_collapse.max() * .04] = np.nan
-    d.intensity[:] = d.intensity[:] * mask[None, :, :]
-    d.intensity_energy_moment_1[:] = (
-        d.intensity_energy_moment_1[:] * nanmask[None, :, :]
-    )
-    for chan in dfit.channels:
-        chan[:] = chan[:] * mask
-    wt.artists.colormaps["rainbow"].set_under([0.50] * 3, 1)
-    wt.artists.colormaps["rainbow"].set_over([0.50] * 3, 1)
-    cmap_rainbow = wt.artists.colormaps["rainbow"].reversed()
-    wt.artists.colormaps["default"].set_under("white")
-    cmap_names = ["Reds", "Greens", "Blues"]
-    colors = [matplotlib.cm.get_cmap(cmap_names[i])(.75) for i in range(3)]
-    center_vals = [1.843, 1.92, 1.945]
     norm_PL = "$\\mathsf{norm. \\,\ PL \\,\ int.}$"
-    nrows = 2
-    cols = [1, 1, 1, "cbar", "cbar", "cbar", "cbar", 1.5]
-    fig, gs = wt.artists.create_figure(nrows=nrows, cols=cols, width="double")
-    axs_maps = [plt.subplot(gs[row, col]) for row in range(2) for col in range(3)]
-    caxs = [plt.subplot(gs[i, 3]) for i in range(2)]
-    axs_slices = [plt.subplot(gs[i, -1]) for i in range(2)]
-    corner_label_axs = (
-        axs_maps[0:3]
-        + [axs_slices[0]]
-        + axs_maps[3:6]
-        + [axs_slices[1]]
-    )
-    for ax, txt in zip(corner_label_axs, alph):
+    nrows = 1
+    vals = [1.85, 1.90, 1.93, 1.95, 1.97]
+    cols = [1] * len(vals) + ["cbar"]
+
+    fig, gs = wt.artists.create_figure(cols=cols, width="double")
+    axs_maps = [plt.subplot(gs[i]) for i in range(len(vals))]
+    cax = plt.subplot(gs[-1])
+    for ax, txt in zip(axs_maps, alph):
         wt.artists.corner_text(
             txt,
             ax=ax,
@@ -264,80 +228,28 @@ if all_plot:
             bbox=True,
             factor=200,
         )
+
     # plot specific colors of PL
-    xpos = [0, 0, 0, 0, 0]
-    ypos = [-8, 2, 10, 26, 40]
-    PL_colors = ["C0", "C1", "#CCFF00", "C3", "C4"]
-    PL_colors = ["#CCFF00", "#FE4EDA", "#FF6600", "#00FFBF", "#00B7EB"]
-    vals = [1.85, 1.90, 1.93, 1.95, 1.97]
-    if True:
-        # first lets do the 3D data
-        for i in range(5):
-            ax = axs_maps[i]
-            dx = d.chop("x", "y", at={"energy": [vals[i], "eV"]}, verbose=False)[0]
-            ax.pcolor(dx)
-            dx.constants[0].format_spec = ".2f"
-            dx.round_spec = -1
-            ax.set_title(dx.constants[0].label, fontsize=12)
-            ax.scatter(xpos, ypos, color=PL_colors, s=25)
-        # now first spectral moment
-        ax = axs_maps[5]
-        vmin = 1.8
-        vmax = 1.94
-        ax.pcolor(
-            d,
-            channel="intensity_energy_moment_1",
-            vmin=vmin,
-            vmax=vmax,
-            cmap=cmap_rainbow,
-        )
-        ax.set_title("first spectral moment", fontsize=12)
-    # now lets do the slices
-    if True:
-        for x, y, c in zip(xpos, ypos, PL_colors):
-            dx = d.chop("energy", at={"x": [x, "um"], "y": [y, "um"]}, verbose=False)[0]
-            axs_slices[0].plot(dx, channel=0, color=c, linewidth=2)
-            dx.channels[0].normalize()
-            axs_slices[1].plot(dx, channel=0, color=c, linewidth=2)
-    # plot basis fits
-    #if True:
-    #    for i in range(3):
-    #        cmap = matplotlib.cm.get_cmap(cmap_names[i])
-    #        ax = axs_maps[6 + i]
-    #        ax.pcolor(dfit, channel=i, cmap=cmap)
-    #    # now plot basis slices
-    #    dx = cfit["PL_basis"]
-    #    ax = axs_slices[-1]
-    #    for i in range(3):
-    #        ax.plot(dx, channel=i, color=colors[i], linewidth=2)
-    # slice lims and labels
-    for i, ax in enumerate(axs_slices):
-        ax.set_xlim(1.7, 2.05)
-        ax.grid()
-        for x, c in zip(center_vals, colors):
-            ax.axvline(x=x, color=c, zorder=1)
-        if i == 1:
-            wt.artists.set_ax_labels(ax=ax, xlabel=label_wm, ylabel=norm_PL)
-        if i == 0:
-            wt.artists.set_ax_labels(
-                ax=ax, ylabel="$\\mathsf{PL \\,\ counts}$", xticks=False
-            )
+    for i in range(5):
+        ax = axs_maps[i]
+        dx = d.chop("x", "y", at={"energy": [vals[i], "eV"]}, verbose=False)[0]
+        ax.pcolor(dx, vmax=d.intensity.max())
+        dx.constants[0].format_spec = ".2f"
+        dx.round_spec = -1
+        ax.set_title(dx.constants[0].label, fontsize=12)
     # cax plotting and labeling
-    cmaps = ["default", cmap_rainbow]
-    tickss = [np.linspace(0, 1, 6), np.linspace(vmin, vmax, 6)]
-    labels = [norm_PL, label_wm]
-    for cax, cmap, ticks, label in zip(caxs, cmaps, tickss, labels):
-        wt.artists.plot_colorbar(cax=cax, cmap=cmap, ticks=ticks, label=label)
+    ticks = np.linspace(0, 1, 6)
+    wt.artists.plot_colorbar(cax=cax, cmap="default", label=norm_PL, ticks=ticks)
     # map labels
     xlabel = "$\\mathsf{x\\,\\left(\\mu m\\right)}$"
     ylabel = "$\\mathsf{y\\,\\left(\\mu m\\right)}$"
     ticks = [-40, -20, 0, 20, 40]
     wt.artists.set_fig_labels(
-        xlabel=xlabel, ylabel=ylabel, col=slice(0, 2, 1), xticks=ticks, yticks=ticks
+        xlabel=xlabel, ylabel=ylabel, col=slice(0, 4, 1), xticks=ticks, yticks=ticks
     )
     # save
     if save:
-        p = "PL_mapping_slices_moments" + fig_type
+        p = "PL_mapping_slices" + fig_type
         p = here / p
         wt.artists.savefig(p)
     else:
@@ -353,14 +265,13 @@ if all_plot:
     img = reflection.image
     spectrum = reflection.spectrum
 
-    fig, gs = wt.artists.create_figure(width="single", cols=[1, 1, "cbar"])
+    fig, gs = wt.artists.create_figure(width=6.66, cols=[1, 1.25, "cbar"])
     ax0 = fig.add_subplot(gs[0])
-    # ax0.set_title("Image")
     ax0.pcolormesh(img, channel="signal", cmap="gist_gray")
     ax1 = fig.add_subplot(gs[1])
-    # ax1.set_title(r"Reflection Contrast")
-    ax1.set_title(r"$y=0$")
+    ax1.set_title(r"$x=0$")
     ax1.pcolormesh(spectrum, channel="contrast")
+    ax1.vlines([1e7/532/8065.5], ymin=img.y.min(), ymax=img.y.max(), linestyle='-', color="g", linewidth=3, alpha=0.7)
     y = spectrum.y[:][0]
     valid = y > -23
     for x, linestyle in zip([spectrum.ares[:][0], spectrum.bres[:][0]], ["-", "-"]):
@@ -375,9 +286,8 @@ if all_plot:
     ax0.grid(axis="y", color="k", linestyle="--", alpha=0.5, linewidth=1)
     ax1.grid(axis="y", color="k", linestyle="--", alpha=0.5, linewidth=1)
     ax1.grid(axis="x", color="k", linestyle='-', alpha=0.3)
-    ax1.set_xlabel(r"$\hbar\omega \ (\mathsf{eV})$")
-    ax0.set_xlabel(r"$x \ (\mu\mathsf{m})$")
-    ax0.set_ylabel(r"$y \ (\mu\mathsf{m})$")
+    wt.artists.set_ax_labels(ax0, xlabel=r"$x \ (\mu\mathsf{m})$", ylabel=r"$y \ (\mu\mathsf{m})$")
+    wt.artists.set_ax_labels(ax1, xlabel=r"$\hbar\omega \ (\mathsf{eV})$")
     ax1.set_yticklabels(["" for i in ax1.get_yticklabels()])
     cax = fig.add_subplot(gs[2])
 
@@ -385,8 +295,8 @@ if all_plot:
         wt.artists.corner_text(
             "ab"[i],
             ax=ax,
-            distance=.03,
-            fontsize=14,
+            # distance=.03,
+            # fontsize=14,
             background_alpha=.8,
             bbox=True,
             factor=200,
@@ -398,6 +308,7 @@ if all_plot:
         cmap="signed",
         ticks=np.linspace(-0.3, 0.3, 7),
         vlim=[-vmag, vmag],
+        decimals=1,
         label=r"$\left(R-R_0\right) / R_0$"
     )
 
@@ -442,9 +353,9 @@ if all_plot:
         axi.grid()
         axi.set_ylim(-25, 25)
         axi.set_xlim(-25, 25)
-    wt.artists.set_ax_labels(ax0, xlabel=raman1.axes[0].label, ylabel=raman1.axes[1].label)
-    wt.artists.set_ax_labels(ax1, xlabel=raman2.axes[0].label)
-    wt.artists.set_ax_labels(ax2, xlabel=raman1.axes[0].label)
+    wt.artists.set_ax_labels(ax0, xlabel=r"$x \ (\mu\mathsf{m})$", ylabel=r"$y \ (\mu\mathsf{m})$")
+    wt.artists.set_ax_labels(ax1, xlabel=r"$x \ (\mu\mathsf{m})$")
+    wt.artists.set_ax_labels(ax2, xlabel=r"$x \ (\mu\mathsf{m})$")
 
     # save
     if save:
@@ -462,21 +373,34 @@ if all_plot:
     d = root.raman.proc_raman
     x0 = 12  # x-slice to examine further (um)
 
+    d_om = root.PL.om
+    extent = [d_om.x.min(), d_om.x.max(), d_om.y.min(), d_om.y.max()]
+    img = np.stack([d_om.r, d_om.g, d_om.b], axis=-1)
+
     d0 = d.chop("energy", "y", at={"x": [x0, "um"]})[0]
     d0 = d0.split("energy", [440], units="wn")[0]
     d0.smooth((2, 0))
     d0.intensity.normalize()
     d0.intensity.log10()
 
-    fig, gs = wt.artists.create_figure(width="single", cols=[1, "cbar"])
+    fig, gs = wt.artists.create_figure(width=6.66, cols=[1, 1.25, "cbar"])
+
     ax0 = plt.subplot(gs[0])
-    ax0.set_title(r"$x=" + f"{x0}" + r"\ \mathsf{\mu m}$")
-    ax0.grid()
+    ax0.imshow(img, extent=extent)
     ax0.set_ylim(-30, 30)
-    ax0.pcolormesh(d0, channel="intensity", cmap="magma", vmin=d0.intensity.min())
+    ax0.vlines([12], ymin=-30, ymax=30, linewidth=3, color="w", alpha=0.5)
+    ax0.set_xlim(12-30, 12+30)
+
+    ax1 = plt.subplot(gs[1])
+    plt.yticks(visible=False)
+    ax1.set_title(r"$x=" + f"{x0}" + r"\ \mathsf{\mu m}$")
+    ax1.grid()
+    ax1.set_ylim(-30, 30)
+    ax1.pcolormesh(d0, channel="intensity", cmap="magma", vmin=d0.intensity.min())
     
-    wt.artists.set_ax_labels(ax0, xlabel=r"Raman shift ($\mathsf{cm}^{-1}$)", ylabel=d0.axes[1].label)
-    cax= plt.subplot(gs[1])
+    wt.artists.set_ax_labels(ax1, xlabel=r"$\mathsf{Raman \ shift \ (cm^{-1}})$")
+    wt.artists.set_ax_labels(ax0, xlabel=r"$x \ (\mu\mathsf{m})$", ylabel=r"$y \ (\mu\mathsf{m})$")
+    cax= plt.subplot(gs[-1])
     ticks = np.linspace(-2, 0, 5)
     c = wt.artists.plot_colorbar(
         cax,
@@ -771,7 +695,7 @@ if all_plot:
     wt.artists.corner_text("b", ax=ax2)
 
     if save:
-        wt.artists.savefig(here / "polarization_summary.png")
+        wt.artists.savefig(here / "polarization_summary.SI.png")
     else:
         plt.show()
 
@@ -902,7 +826,7 @@ if all_plot:
     wt.artists.corner_text("b", ax=ax2)
 
     if save:
-        wt.artists.savefig(here / "polarization_summary.revised.png")
+        wt.artists.savefig(here / "polarization_summary.main.png")
     else:
         plt.show()
 
