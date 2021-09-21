@@ -28,7 +28,7 @@ n_mos2_ml = from_refractiveindex_info(
 )
 
 n_ws2_ml = from_refractiveindex_info(
-    r"https://refractiveindex.info/database/data/main/WS2/Hsu-1L.yml", 
+    r"https://refractiveindex.info/database/data/main/WS2/Ermolaev.yml", 
     skip_header=10, skip_footer=5
 )
 

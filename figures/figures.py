@@ -3,11 +3,10 @@ import numpy as np
 import WrightTools as wt
 import pathlib
 import matplotlib.pyplot as plt
-import matplotlib
 import string
 
 
-all_plot = True
+all_plot = False
 save = True
 fig_type = ".png"
 
@@ -16,12 +15,6 @@ data_dir = here.parent / "data"
 p = "ZYZ543.wt5"
 root = wt.open(data_dir / p)
 shg_pol = wt.open(data_dir / "polarization.wt5")
-
-
-try:
-    from . import optical_model as om
-except (ModuleNotFoundError, ImportError):
-    import optical_model as om
 
 
 if False:
@@ -882,4 +875,11 @@ if False:
         ax.legend()
         wt.artists.savefig(os.path.join(__here__, "{0}_junction.png".format(junction_name.lower())))
         # plt.show()
+
+
+# --- reflection contrast 20x and comparison with NA -----------------------------------------------
+if all_plot:
+    import workup as rc
+    rc.run(all_plot, save)
+
 
