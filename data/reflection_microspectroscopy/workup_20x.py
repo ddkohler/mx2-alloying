@@ -5,7 +5,7 @@ import pathlib
 here = pathlib.Path(__file__).resolve().parent
 
 # slit parameters
-mpix = 1333 #middle pixel
+mpix = 1333  # middle pixel
 # deltax = 4
 # lpix_im = mpix-deltax
 # rpix_im = mpix+deltax
@@ -33,6 +33,21 @@ temp.create_variable(
 temp.create_variable(
     "ydist", values=(temp.yindex[:] - temp.yindex[:].mean()) * um_per_pixel, units="um"
 )
+temp.smooth((10,0))
+
+substrate_low = temp.split("yindex", [900])[0].signal[:].mean(axis=1)[:, None]
+substrate_high = temp.split("yindex", [1250])[1].signal[:].mean(axis=1)[:, None]
+# interpolate between top and bottom substrate spectra 
+z = temp.yindex[:].copy()
+s = (z - 900) / 350
+s[s>1] = 1
+s[s<0] = 0
+substrate = (1-s) * substrate_low + s * substrate_high
+
+temp.create_channel(
+    "contrast", values=(temp.signal[:] - substrate) / substrate, signed=True
+)
+
 temp.copy(parent=root, name='spectrum')
 
 root.print_tree()

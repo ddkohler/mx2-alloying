@@ -878,8 +878,17 @@ if False:
 
 
 # --- reflection contrast 20x and comparison with NA -----------------------------------------------
+
+
 if all_plot:
     import workup as rc
-    rc.run(all_plot, save)
+    rc.run(save)
 
+
+# --- reflection contrast vs SiO2 thickness --------------------------------------------------------
+
+
+if all_plot:
+    import rc_vs_SiO2_thickness as mod
+    mod.run(save)
 

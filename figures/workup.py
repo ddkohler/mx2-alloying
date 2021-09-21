@@ -2,35 +2,23 @@ import WrightTools as wt
 import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
-import fit_reflection as fr
+import figlib as fl
 import tmm_lib as lib
 
 
 __here__ = pathlib.Path(__file__).resolve().parent
 datapath = __here__.parent / "data" / "reflection_microspectroscopy"
 
+hw = np.linspace(1.6, 2.7, 201)
 
-def run(all_plot, save):
+
+def run(save):
     root = wt.open(datapath / "reflection_20x.wt5")
     root.print_tree()
 
     lamp = root.lamp
 
     data = root.spectrum
-    data.smooth((10,0))
-
-    substrate_low = data.split("yindex", [900])[0].signal[:].mean(axis=1)[:, None]
-    substrate_high = data.split("yindex", [1250])[1].signal[:].mean(axis=1)[:, None]
-    # interpolate between top and bottom substrate spectra 
-    z = data.yindex[:].copy()
-    s = (z - 900) / 350
-    s[s>1] = 1
-    s[s<0] = 0
-    substrate = (1-s) * substrate_low + s * substrate_high
-
-    data.create_channel(
-        "contrast", values=(data.signal[:] - substrate) / substrate, signed=True
-    )
     data.transform("energy", "ydist")
     data.contrast.clip(-0.35, 0.35)
 
@@ -58,7 +46,11 @@ def run(all_plot, save):
     )
     
     wt.artists.set_ax_labels(ax1, xlabel=r"$\hbar\omega \ \left(\mathsf{eV}\right)$")
-    wt.artists.set_ax_labels(ax0, xlabel=r"$\mathsf{x \ position \ (\mu m)}$", ylabel=r"$\mathsf{y \ position \ (\mu m)}$")
+    wt.artists.set_ax_labels(
+        ax0,
+        xlabel=r"$\mathsf{x \ position \ (\mu m)}$",
+        ylabel=r"$\mathsf{y \ position \ (\mu m)}$"
+    )
     wt.artists.corner_text("a", ax=ax0)
     wt.artists.corner_text("b", ax=ax1)
     wt.artists.savefig(__here__ / "reflection_contrast_20x.png")
@@ -83,39 +75,30 @@ def run(all_plot, save):
         xlabel=r"$\hbar\omega \ \left(\mathsf{eV}\right)$",
     )
 
-    # ax2.set_title("Comparison with Fresnel Effects")
     y_ws2 = data.split("ydist", [15, 20])[1].contrast[:].mean(axis=1)
     y_mos2 = data.split("ydist", [31, 35])[1].contrast[:].mean(axis=1)
     x = data.energy.points[:]
 
-    d2 = 298e-7
-
-    if True:  # apply offsets to MX2 optical constants
-        def nmos2(hw):
-            return fr.n_mos2_ml(hw + 0.04)
-        def nws2(hw):
-            return fr.n_ws2_ml(hw + 0.07)
-    else:
-        nmos2 = fr.n_mos2_ml
-        nws2 = fr.n_ws2_ml
+    nmos2 = fl.n_mos2
+    nws2 = fl.n_ws2
 
     # MoS2
-    blank = lib.FilmStack([fr.n_air, fr.n_fused_silica, fr.n_Si], [d2])
-    sample = lib.FilmStack([fr.n_air, nmos2, fr.n_fused_silica, fr.n_Si], [fr.d_mono, d2])
-    r_blank = blank.RT(fr.hw)[0]
-    r_sample = sample.RT(fr.hw)[0]
+    blank = lib.FilmStack([fl.n_air, fl.n_fused_silica, fl.n_Si], [fl.d_SiO2])
+    sample = lib.FilmStack([fl.n_air, nmos2, fl.n_fused_silica, fl.n_Si], [fl.d_mono, fl.d_SiO2])
+    r_blank = blank.RT(hw)[0]
+    r_sample = sample.RT(hw)[0]
     contrast = (r_sample - r_blank) / r_blank
     ax2.plot(data.energy.points[:], y_mos2, label=r"MoS$_2$", color="k")
-    ax2.plot(fr.hw, contrast, linewidth=4, alpha=0.5, color="k", label=r"MoS$_2$ (theoretical)")
+    ax2.plot(hw, contrast, linewidth=4, alpha=0.5, color="k", label=r"MoS$_2$ (theoretical)")
 
     # WS2
-    blank = lib.FilmStack([fr.n_air, fr.n_fused_silica, fr.n_Si], [d2])
-    sample = lib.FilmStack([fr.n_air, nws2, fr.n_fused_silica, fr.n_Si], [fr.d_mono, d2])
-    r_blank = blank.RT(fr.hw)[0]
-    r_sample = sample.RT(fr.hw)[0]
+    blank = lib.FilmStack([fl.n_air, fl.n_fused_silica, fl.n_Si], [fl.d_SiO2])
+    sample = lib.FilmStack([fl.n_air, nws2, fl.n_fused_silica, fl.n_Si], [fl.d_mono, fl.d_SiO2])
+    r_blank = blank.RT(hw)[0]
+    r_sample = sample.RT(hw)[0]
     contrast = (r_sample - r_blank) / r_blank
     ax3.plot(data.energy.points[:], y_ws2, label=r"WS$_2$", color="k")
-    ax3.plot(fr.hw, contrast, linewidth=4, alpha=0.5, color="k", label=r"WS$_2$ (theoretical)")
+    ax3.plot(hw, contrast, linewidth=4, alpha=0.5, color="k", label=r"WS$_2$ (theoretical)")
 
     # 100x
     x100 = wt.open(datapath / "reflection.wt5")
@@ -139,4 +122,4 @@ def run(all_plot, save):
 
 
 if __name__ == "__main__":
-    run(True, True)
+    run(True)
