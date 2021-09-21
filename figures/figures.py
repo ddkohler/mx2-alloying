@@ -897,6 +897,6 @@ if all_plot:
 
 
 if all_plot:
-    import johns_raman_si_fig as mod
+    import raman_si as mod
     mod.run(save)
 
