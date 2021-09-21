@@ -892,3 +892,11 @@ if all_plot:
     import rc_vs_SiO2_thickness as mod
     mod.run(save)
 
+
+# --- raman SI figure ------------------------------------------------------------------------------
+
+
+if all_plot:
+    import johns_raman_si_fig as mod
+    mod.run(save)
+

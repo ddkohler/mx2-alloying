@@ -1,6 +1,9 @@
 import numpy as np
 
 
+# --- parameters ----------------------------------------------------------------------------------
+
+
 d_SiO2 = 298e-7  # thickness of SiO2 layer, cm
 d_mono = 7e-8  # thickness of MX2 monolayer, cm
 
