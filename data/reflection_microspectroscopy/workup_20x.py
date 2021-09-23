@@ -28,8 +28,9 @@ temp.copy(parent=root, name="lamp")
 temp = wt.data.from_Solis(here / '20x spectrum.asc').split("yindex", [850, 1300])[1]
 # ddk: curious about this assignment...
 temp.create_variable(
-    "energy", values=np.linspace(2.57, 1.45, temp.wm[:].size).reshape(temp.wm.shape), units="eV"
+    "energy", values=np.linspace(440.1, 800.9, temp.wm[:].size).reshape(temp.wm.shape), units="nm"
 )
+temp.energy.convert("eV")
 temp.create_variable(
     "ydist", values=(temp.yindex[:] - temp.yindex[:].mean()) * um_per_pixel, units="um"
 )
