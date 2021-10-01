@@ -9,8 +9,8 @@ d_mono = 7e-8  # thickness of MX2 monolayer, cm
 
 # spectral shift (eV) to apply to literature refractive index of MX2
 # positive values shift features to lower energy (redshift)
-offset_mos2 = 0.04  
-offset_ws2 = 0.07
+offset_mos2 = 0.05
+offset_ws2 = 0.08
 
 
 # --- refractive index data -----------------------------------------------------------------------

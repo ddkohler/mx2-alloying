@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 here = pathlib.Path(__file__).resolve().parent
 data_dir = here.parent / "data"
-p = "ZYZ543.wt5"
 
 def run(save):
     wt5 = data_dir / "reflection_microspectroscopy" / "reflection.wt5"    
@@ -14,12 +13,11 @@ def run(save):
     spectrum = reflection.spectrum
 
     fig, gs = wt.artists.create_figure(
-        width=6.66, nrows=2, margin=[0.8, 0.15, 0.8, 0.8],
+        width=6.66, nrows=4, margin=[0.8, 0.15, 0.8, 0.8],
         cols=[1, 1.25],
-        aspects=[[[0,0], 0.1],[[1,0], 1]],
+        aspects=[[[0,0], 0.1],[[1,0], 1],[[2,0], 0.2],[[3,0], 1]],
         hspace=0.1, wspace=0.1
     )
-
 
     ax0 = fig.add_subplot(gs[1,0])
     ax0.set_facecolor((0,0,0,0))
@@ -49,17 +47,6 @@ def run(save):
     ax1.set_yticklabels(["" for i in ax1.get_yticklabels()])
     cax = fig.add_subplot(gs[0, 1])
 
-    for i, ax in enumerate([ax0, ax1]):
-        wt.artists.corner_text(
-            "ab"[i],
-            ax=ax,
-            # distance=.03,
-            # fontsize=14,
-            background_alpha=.8,
-            bbox=True,
-            factor=200,
-        )
-
     vmag = max(spectrum.contrast.min(), spectrum.contrast.max())
     wt.artists.plot_colorbar(
         cax,
@@ -72,6 +59,45 @@ def run(save):
     )
     cax.xaxis.set_label_position('top')
     cax.xaxis.set_ticks_position('top')
+
+    ax2 = plt.subplot(gs[3,0])
+    angle1 = 30 * np.pi / 180  # angle of rc trace from interface normal
+    angle2 = 0 * np.pi / 180  # angle of pl trace from interface normal
+    root = wt.open(data_dir / "ZYZ543.wt5")
+    x0 = 0
+    pl = root.PL.proc_PL.chop("energy", "y", at={"x":[x0, "um"]})[0]
+    pl_max = np.array([pl.energy[i] for i in np.argmax(pl.intensity[:], axis=0)])
+    ax2.plot(spectrum.y.points * np.cos(angle1), spectrum.ares.points, label="RC")
+    ax2.plot(
+        -(pl.y.points * np.cos(angle2) - 20),
+        pl_max,
+        label="PPL"
+    )
+    ax2.plot(
+        -(pl.y.points * np.cos(angle2) - 20),
+        pl.intensity_energy_moment_1[0],
+        label=r"$\langle$PL$\rangle$"
+    )
+    ax2.set_ylim(1.8, 1.98)
+    ax2.set_xlim(-20, 15)
+    wt.artists.set_ax_labels(
+        ax2,
+        xlabel=r"$y \perp \ \left(\mathsf{\mu m}\right)$",
+        ylabel=r"$\hbar \omega \ \left(\mathsf{eV}\right)$"
+    )
+    ax2.grid(ls=":", color="k")
+    plt.legend(loc=4)
+
+    for i, ax in enumerate([ax0, ax1, ax2]):
+        wt.artists.corner_text(
+            "abc"[i],
+            ax=ax,
+            # distance=.03,
+            # fontsize=14,
+            background_alpha=.8,
+            bbox=True,
+            factor=200,
+        )
 
     # save
     if save:
