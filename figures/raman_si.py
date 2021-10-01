@@ -3,8 +3,7 @@ import WrightTools as wt
 import matplotlib.pyplot as plt
 import pathlib
 
-
-x0 = -24  # 12  # x-position (in um) to examine further
+x0 = 12  # x-position (in um) to examine further
 verbose = False
 
 here = pathlib.Path(__file__).resolve().parent
@@ -13,12 +12,11 @@ p = "ZYZ543.wt5"
 root = wt.open(data_dir / p)
 d = root.raman.proc_raman
 
-if False:  # ddk: checking out PL signals for comparison
-    dsadfj = root.PL.raw_PL
-    dsadfj.level(0, 2, -2)
-    dsadfj.convert("eV")
-    outs = wt.artists.interact2D(dsadfj, xaxis="energy")
+if True:
+    dsags = root.PL.proc_PL
+    wt.artists.interact2D(dsags, xaxis=2, yaxis=1)
     plt.show()
+
 
 def run(save):
     """raman shift vs y position
@@ -64,6 +62,7 @@ def run(save):
     # ax1.grid()
     ax1.set_ylim(0, 3)
     ax1.set_xlim(100, 600)
+    ax1.set_yticks()
 
     wt.artists.set_ax_labels(ax0, xlabel=r"Raman shift ($\mathsf{cm}^{-1}$)", ylabel=r"y-position $\left( \mathsf{\mu m} \right)$")
     wt.artists.set_ax_labels(ax1, xlabel=r"Raman shift ($\mathsf{cm}^{-1}$)")
@@ -81,7 +80,7 @@ def run(save):
 def run2(save):
     """experimental figure for checking the mode splitting of MoS2
     """
-    d_temp = d.chop("x", "y", at={"energy": [350, "wn"]}, verbose=verbose)[0]
+    d_temp = d.chop("x", "y", at={"energy": [351, "wn"]}, verbose=verbose)[0]
     d_temp.intensity.normalize()
     separator = d_temp.intensity.points
     # MX2_area = separator > 0.2
@@ -89,7 +88,8 @@ def run2(save):
     # MoS2_area = MX2_area & ~WS2_area
 
     # filter out WS2
-    d0 = d.split("energy", [200, 460], verbose=verbose)[1]
+    raman_lims = [200, 480]
+    d0 = d.split("energy", raman_lims, verbose=verbose)[1]
     d0.create_variable("filter", values=separator[None, :, :])
     d0 = d0.split("filter", [0.1], verbose=verbose)[0]
     # baseline subtract from substrate
@@ -102,8 +102,13 @@ def run2(save):
     z_baseline = np.nanmean(baseline.intensity.points, axis=2)[:, :, None]
     d0.intensity[:] -= z_baseline
     mos2 = d0.split("filter2", [0.3], verbose=verbose)[1]
+    # further remove spurious substrate spectra
+    mos2.create_variable("line1", values=(1.525 * mos2.x[:] - mos2.y[:] + 54.625), units="um")
+    mos2.print_tree()
+    mos2 = mos2.split("line1", [0])[1]
     mos2.smooth((2, 0, 0))
-    # outa = wt.artists.interact2D(mos2, xaxis="energy")
+    # outa = wt.artists.interact2D(mos2)
+    # plt.show()
     # mos2.level(0, 0, -5)  # axis=0 is energy
 
     # characterize the splitting
@@ -218,10 +223,7 @@ def run2(save):
     wt.artists.set_ax_labels(
         ax1,
         xlabel=r"$\bar{\nu}_{A_{1g}}-\bar{\nu}_{E_{2g}^\prime} \ \left( \mathsf{cm}^{-1} \right)$",
-        # ylabel="counts"
     )
-    # ax1.yaxis.set_label_position("right")
-    # ax1.yaxis.tick_right()
     wt.artists.corner_text("e")
     plt.grid()
 
@@ -233,13 +235,13 @@ def run2(save):
     ax2.grid()
     ax2.yaxis.set_label_position("right")
     ax2.yaxis.tick_right()
+    ax2.set_xlim(*raman_lims)
     wt.artists.corner_text("f")
     wt.artists.set_ax_labels(
         ax2,
         xlabel=r"$\mathsf{Raman \ shift} \ \left( \mathsf{cm}^{-1} \right)$",
         ylabel="average signal (a.u.)"
     )
-
 
     for col, channel, ticks, label in zip(
         [0, 1, 2],
@@ -292,7 +294,7 @@ def run2(save):
         p = f"raman_mos2_mode_splitting.SI.png"
         p = here / p
         wt.artists.savefig(p)
-    else: 
+    else:
         plt.show()
 
 
