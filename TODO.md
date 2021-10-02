@@ -2,11 +2,12 @@
 - [ ] Revise RC manuscript image
   - full page width
   - include RC simulations (for each figure, put shift values in the figure as text box)
-  - show twinning line in optical image?
-  - 
+  - show twinning line in optical image (or at least bring up comparisons with Raman)
+  - bring up stokes shift in discussion
 - [ ] Revise Raman manuscript image
-  - show splitting distributions
-  - double-check labeling: for monolayer, the two modes are:  E_1^\prime ~383 , A^\prime ~405
+  - MoS2: show splitting distributions
+    - double-check labeling: for monolayer, the two modes are:  E_1^\prime ~383 , A^\prime ~405
+  - Similar figure for WS2?  tough, because resonance effect is convolved...
 - Discussion: note that WS2 peak shifts may be due to inhomogeneity near the junction
-- Raise the question of why our peaks are so different in energy
+- Raise the question of why our peaks are so different in energy from literature.
 - 
