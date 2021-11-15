@@ -28,7 +28,7 @@ def run(save):
         width="double", nrows=4,
         cols=[1, 1, 1],
         aspects=[[[0,0], 0.1],[[1,0], 1],[[2,0], 0.2],[[3,0], 1]],
-        hspace=0.1, wspace=0.1
+        hspace=0.1, wspace=0.3
     )
 
     ax0 = fig.add_subplot(gs[1,0])
@@ -81,15 +81,22 @@ def run(save):
     x0 = 0
     pl = root.PL.proc_PL.chop("energy", "y", at={"x":[x0, "um"]})[0]
     pl_max = np.array([pl.energy[i] for i in np.argmax(pl.intensity[:], axis=0)])
-    ax2.plot(spectrum.y.points * np.cos(angle1), spectrum.ares.points, label="RC")
+    ax2.plot(
+        spectrum.y.points * np.cos(angle1),
+        spectrum.ares.points,
+        color="k", ls="-",
+        label="RC"
+    )
     ax2.plot(
         -(pl.y.points * np.cos(angle2) - 20),
         pl_max,
+        color="k", ls=":",
         label="PPL"
     )
     ax2.plot(
         -(pl.y.points * np.cos(angle2) - 20),
         pl.intensity_energy_moment_1[0],
+        color="k", ls="--"   ,     
         label=r"$\langle$PL$\rangle$"
     )
     ax2.set_ylim(1.8, 1.98)
@@ -105,6 +112,8 @@ def run(save):
 
     ax3 = plt.subplot(gs[3, 0])
     ax4 = plt.subplot(gs[3, 1], sharey=ax3)
+    wt.artists.corner_text(r"MoS$_2$, 0.46 NA", ax=ax3, background_alpha=.8, bbox=True, corner="LR")
+    wt.artists.corner_text(r"WS$_2$, 0.46 NA", ax=ax4, background_alpha=.8, bbox=True, corner="LR")
     plt.yticks(visible=False)
 
     # chose specific points
@@ -118,16 +127,16 @@ def run(save):
     r_blank = blank.RT(hw)[0]
     r_sample = sample.RT(hw)[0]
     contrast = (r_sample - r_blank) / r_blank
-    ax3.plot(x, y_mos2, label=r"MoS$_2$", color="k")
-    ax3.plot(hw, contrast, linewidth=4, alpha=0.5, color="k", label=r"MoS$_2$ (theoretical)")
+    ax3.plot(x, y_mos2, label=r"MoS$_2$", color="k", alpha=0.8)
+    ax3.plot(hw, contrast, linewidth=2, linestyle=":", alpha=0.8, color="k", label=r"MoS$_2$ (theoretical)")
 
     blank = lib.FilmStack([fl.n_air, fl.n_fused_silica, fl.n_Si], [fl.d_SiO2])
     sample = lib.FilmStack([fl.n_air, nws2, fl.n_fused_silica, fl.n_Si], [fl.d_mono, fl.d_SiO2])
     r_blank = blank.RT(hw)[0]
     r_sample = sample.RT(hw)[0]
     contrast = (r_sample - r_blank) / r_blank
-    ax4.plot(x, y_ws2, label=r"WS$_2$", color="k")
-    ax4.plot(hw, contrast, linewidth=4, alpha=0.5, color="k", label=r"WS$_2$ (theoretical)")
+    ax4.plot(x, y_ws2, label=r"WS$_2$", color="k", alpha=0.8)
+    ax4.plot(hw, contrast, linewidth=2, linestyle=":", alpha=0.8, color="k", label=r"WS$_2$ (theoretical)")
 
     for ax in [ax3, ax4]:
         ax.grid(ls=":", c="k")
@@ -142,20 +151,20 @@ def run(save):
         xlabel=r"$\hbar\omega \ \left(\mathsf{eV}\right)$",
     )
 
-    from matplotlib.lines import Line2D
-    custom_lines = [
-        Line2D([0], [0], color="k", ls=":"),
-        Line2D([0], [0], color="k"),
-        Line2D([0], [0], color="k", lw=4, alpha=0.5),
-    ]
-    ax4.legend(
-        custom_lines,
-        ['NA 0.95', 'NA 0.46', 'NA ~ 0 \n (theory)'],
-        loc=[0.6, 0.1],
-    )
+    # from matplotlib.lines import Line2D
+    # custom_lines = [
+    #     Line2D([0], [0], color="k", ls=":"),
+    #     Line2D([0], [0], color="k"),
+    #     Line2D([0], [0], color="k", lw=4, alpha=0.5),
+    # ]
+    # ax4.legend(
+    #     custom_lines,
+    #     ['NA 0.95', 'NA 0.46', 'NA ~ 0 \n (theory)'],
+    #     loc=[0.6, 0.1],
+    # )
+    wt.artists.corner_text("0.95 NA", ax=ax1, background_alpha=.8, bbox=True, corner="LR")
 
-
-    for i, ax in enumerate([ax0, ax1, ax2, ax3, ax4]):
+    for i, ax in enumerate([ax0, ax1, ax3, ax4, ax2]):
         wt.artists.corner_text(
             "abcde"[i],
             ax=ax,
@@ -170,6 +179,7 @@ def run(save):
         wt.artists.savefig(p)
     else:
         plt.show()
+
 
 if __name__ == "__main__":
     from sys import argv

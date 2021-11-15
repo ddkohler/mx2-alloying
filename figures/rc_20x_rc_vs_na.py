@@ -12,7 +12,7 @@ datapath = __here__.parent / "data" / "reflection_microspectroscopy"
 hw = np.linspace(1.6, 2.7, 201)
 
 
-def run(save):
+def run1(save):
     root = wt.open(datapath / "reflection_20x.wt5")
     root.print_tree()
 
@@ -32,7 +32,7 @@ def run(save):
 
     ax1 = plt.subplot(gs[0, 1])
     ax1.set_title("reflection contrast \n (y=0)")
-    ax1.pcolormesh(data, channel="contrast")
+    ax1.pcolormesh(data.split("energy", [2.5])[0], channel="contrast")
     plt.yticks(visible=False)
     ax1.grid()
 
@@ -53,7 +53,17 @@ def run(save):
     )
     wt.artists.corner_text("a", ax=ax0)
     wt.artists.corner_text("b", ax=ax1)
-    wt.artists.savefig(__here__ / "reflection_contrast_20x.png")
+
+    if save:
+        wt.artists.savefig(__here__ / "reflection_contrast_20x.png")
+    else:
+        plt.show()
+
+def run2(save):
+    root = wt.open(datapath / "reflection_20x.wt5")
+    data = root.spectrum
+    data.transform("energy", "ydist")
+    data.contrast.clip(-0.35, 0.35)
 
     # fig 2: comparison of different NAs
     fig, gs = wt.artists.create_figure(width="dissertation", nrows=1, cols=[1, 1, 0.3])
@@ -118,8 +128,17 @@ def run(save):
     ax3.legend(custom_lines, ['NA 0.95', 'NA 0.46', 'NA ~ 0 \n (theory)'], fontsize=18, loc=[1.1, 0.5])
     wt.artists.corner_text("a", ax=ax2)
     wt.artists.corner_text("b", ax=ax3)
-    wt.artists.savefig(__here__ / "reflection_contrast_vs_na.png")
+    if save:
+        wt.artists.savefig(__here__ / "reflection_contrast_vs_na.png")
+    else:
+        plt.show()
 
 
 if __name__ == "__main__":
-    run(True)
+    from sys import argv
+    if len(argv) > 1:
+        save = argv[1] != "0"
+    else:
+        save = True
+    run1(save)
+    # run2(save)

@@ -21,8 +21,7 @@ def run(save):
     d.smooth((5, 0, 0))
     x0 = 12  # x-slice to examine further (um)
     screen = root.raman.proc_raman.chop("x", "y", at={"energy":[350, "wn"]})[0]
-    d.create_channel("screen", values=screen.intensity[:][None, :, :])
-    d.screen.normalize()
+    screen.intensity.normalize()
 
     # d_om = root.PL.om
     # d_om.print_tree()
@@ -59,15 +58,16 @@ def run(save):
     # if x, y are 1D, use z.T; if x, y are 2D, use z
     if False:  # for testing alignment of reflection, PL images
         # triangle boundary
-        ax0.contour(d.axes[0].points, d.axes[1].points, mask.T, levels=np.array([0.5]), alpha=0.5)
+        # ax0.contour(d.axes[0].points, d.axes[1].points, mask.T, levels=np.array([0.5]), alpha=0.5)
         # junction
-        ax0.contour(d.axes[0].points, d.axes[1].points, pl_color.T, levels=np.array([1.91]), alpha=0.3)
+        # ax0.contour(d.axes[0].points, d.axes[1].points, pl_color.T, levels=np.array([1.91]), alpha=0.3)
         ax1.contour(d.axes[0].points, d.axes[1].points, pl_color.T, levels=np.array([1.91]), alpha=0.3)
 
     pcolormesh = ax1.pcolormesh(d.axes[0].points, d.axes[1].points, pl_color.T, cmap="rainbow_r")
     ax1.contour(
-        d.axes[0].points, d.axes[1].points-2, d.screen[0].T,
-        levels=np.array([0, 0.5, 1]), colors="w", linewidths=2
+        screen, channel="intensity",
+        # d.axes[0].points, d.axes[1].points-2, d.screen[0].T,
+        levels=np.array([0, 0.5, 1]), colors="w", linewidths=2, alpha=1
     )
     ax1.text(-10, 10, r"$\mathsf{WS}_2$", color="w", fontsize=16)
     ax1.text(-3, 30, r"$\mathsf{MoS}_2$", color="w", fontsize=16)

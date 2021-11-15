@@ -20,7 +20,7 @@ shg_pol = wt.open(data_dir / "polarization.wt5")
 if False:
     wt.artists.apply_rcparams(kind="publication")
 
-
+ 
 # --- definitions ---------------------------------------------------------------------------------
 
 
@@ -122,9 +122,9 @@ if all_plot:
 
     fig, gs = wt.artists.create_figure(width="dissertation", cols=[1, 1, 1])
     ax0 = plt.subplot(gs[0])
-    ax1 = plt.subplot(gs[1])
+    ax1 = plt.subplot(gs[1], sharey=ax0)
     plt.yticks(visible=False)
-    ax2 = plt.subplot(gs[2])
+    ax2 = plt.subplot(gs[2], sharey=ax0)
     plt.yticks(visible=False)
 
     ax1.set_title(r"Raman, WS$_2$ 2LA(M)")
