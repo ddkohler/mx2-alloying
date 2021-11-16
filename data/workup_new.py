@@ -66,11 +66,11 @@ def from_Solis(
 # PL
 if all_import:
     # raw PL data
-    PL = root.create_collection(name="PL")
+    PL = root.create_collection(name="pl")
     p = data_dir / "characterization" / "B-PLmapping-532-D1-300-300G-50x-1-05-1.txt"
-    d = from_Horiba(p, "nm", "raw_PL", parent=PL)
+    d = from_Horiba(p, "nm", "raw", parent=PL)
     # processed
-    d = d.copy(parent=PL, name="PL", verbose=verbose)
+    d = d.copy(name="temp", verbose=verbose)
     d.convert("eV", verbose=verbose, convert_variables=True)
     d.level("intensity", 0, 2, verbose=verbose)
     d.level("intensity", 1, 2, verbose=verbose)
@@ -91,6 +91,8 @@ if all_import:
 
     yvar = d["y"]
     yvar += 8
+    d = d.split("y", [-40, 56])[1]
+    d = d.copy(parent=PL, name="proc", verbose=verbose)
 
     if talkback:
         print("PL done", time.time() - tstart)
@@ -100,17 +102,20 @@ if all_import:
     # raw
     raman = root.create_collection(name="raman")
     p = data_dir / "characterization" / "B-Ramanmapping-532-D1-300-2400G-50x-1-05-1.txt"
-    d = from_Horiba(p, "wn", "raw_raman", parent=raman)
+    d = from_Horiba(p, "wn", "raw", parent=raman)
     # processed
-    d = d.copy(parent=raman, name="raman", verbose=verbose)
+    d = d.copy(name="temp", verbose=verbose)
     # bad pixels
     for idx in [247, 248, 364, 365, 638, 639]:
         d.intensity[idx] = np.nan
     d.transform("energy", "x", "y")
     d.heal(method="nearest")
     d.transform("x", "y", "energy")
+    d.level("intensity", 2, 5)
     yvar = d["y"]
     yvar += 6  # tweaked height to match with PL
+    d = d.split("y", [-40, 56])[1]
+    d = d.copy(parent=raman, name="proc", verbose=verbose)
     d.create_channel("leveled", values=d.intensity[:])
     d.level("leveled", 0, -20)
 
