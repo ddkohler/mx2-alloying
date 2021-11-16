@@ -8,7 +8,7 @@ from scipy.ndimage import median_filter
 
 
 all_import = True
-data_dir = pathlib.Path(__file__).parent.resolve()
+data_dir = pathlib.Path(__file__).resolve().parent
 root = wt.Collection(name="root")
 verbose = False
 talkback = True
