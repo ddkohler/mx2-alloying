@@ -112,6 +112,7 @@ if all_import:
     d.heal(method="nearest")
     d.transform("x", "y", "energy")
     d.level("intensity", 2, 5)
+    # d.level("intensity", 0, 5) # need to level on energy axis to avoid removing Si peaks
     yvar = d["y"]
     yvar += 6  # tweaked height to match with PL
     d = d.split("y", [-40, 56])[1]
