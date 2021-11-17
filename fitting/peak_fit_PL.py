@@ -117,7 +117,7 @@ if True:
             0.05,
             0.1
         ]
-        bounds = ([0, 0, 1.75, 1.83, 0.01, 0.01], [np.inf, np.inf, 1.83, 1.7, 0.4, 0.4])
+        bounds = ([0, 0, 1.75, 1.835, 0.01, 0.01], [np.inf, np.inf, 1.835, 1.87, 0.4, 0.4])
         result = least_squares(
             fom, p0,
             bounds=bounds,
