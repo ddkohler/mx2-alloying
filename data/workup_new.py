@@ -72,8 +72,8 @@ if all_import:
     # processed
     d = d.copy(name="temp", verbose=verbose)
     d.convert("eV", verbose=verbose, convert_variables=True)
-    d.level("intensity", 0, 2, verbose=verbose)
     d.level("intensity", 1, 2, verbose=verbose)
+    d.level("intensity", 2, 2, verbose=verbose)
     d.smooth([2, 0, 0], verbose=verbose)
 
     d.moment("energy", moment=1)

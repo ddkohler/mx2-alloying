@@ -7,7 +7,11 @@ from fitlib import two_res
 here = pathlib.Path(__file__).resolve().parent
 root = wt.open(here.parent / "data" / "data.wt5")
 
-d = wt.open(here / "ws2_core_fitted.wt5")
+out = wt.artists.interact2D(root.raman.proc, xaxis="energy")
+plt.show()
+1/0
+
+d = wt.open(here / "mos2_fitted.wt5")
 # null = np.nanmean(0.5 * d.r1[:] + 0.5 * d.r2[:])
 d.r1.null = np.nanmean(d.r1[:])
 d.r2.null = np.nanmean(d.r2[:])
@@ -20,13 +24,21 @@ d.create_channel(name="area1", values=d.a1[:] * d.w1[:])
 d.create_channel(name="area2", values=d.a2[:] * d.w2[:])
 d.create_channel(name="trion_fraction", values=d.area1[:] / (d.area1[:] + d.area2[:]))
 
-fig, gs = wt.artists.create_figure(width="double", nrows=3, cols=[1, "cbar"] * 3, wspace=1)
+fig, gs = wt.artists.create_figure(width="double", nrows=2, cols=[1, "cbar"] * 2, wspace=1)
 
-for i, chan in enumerate(["area1", "r1", "w1", "area2", "r2", "w2", "trion_fraction", "rdiff", "w_ratio"]):
-    row = i // 3
-    col = i % 3
+for i, chan in enumerate([
+    # "area1", "r1", "w1", "area2", 
+    "r2",
+    # "w2",
+    "trion_fraction",
+    "rdiff",
+    "w_ratio"
+]):
+    row = i // 2
+    col = i % 2
     # print(row, col)
     axi = plt.subplot(gs[row, col * 2])
+    wt.artists.corner_text(chan, ax=axi)
     plt.yticks(visible=False)
     if not d[chan].signed:
         d[chan].null = d[chan].min()
@@ -59,8 +71,8 @@ if False:
     out2 = wt.artists.interact2D(d, channel="intensity_energy_moment_0")
 
 if True:  # check fit quality along several points
-    xcoord = -14
-    fit = wt.open(here / "ws2_core_fitted.wt5").chop("energy", "y", at={"x":[xcoord, "um"]})[0]
+    xcoord = -20
+    fit = wt.open(here / "mos2_fitted.wt5").chop("energy", "y", at={"x":[xcoord, "um"]})[0]
     data = root.pl.proc.chop("energy", "y", at={"x":[xcoord, "um"]})[0]
 
     plt.figure()
@@ -73,7 +85,7 @@ if True:  # check fit quality along several points
         p = [fi.a1[0], fi.a2[0], fi.r1[0], fi.r2[0], fi.w1[0], fi.w2[0]]
         yfit = two_res(di.energy.points, p) + offset
         plt.plot(di.energy.points, yfit, color="k")
-        offset += 1000
+        offset += 500
 
 
 plt.show()
