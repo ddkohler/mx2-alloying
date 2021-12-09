@@ -8,7 +8,7 @@ from matplotlib import cm
 
 
 ref_cmap = cm.get_cmap("magma")
-colors = ref_cmap(np.linspace(0, 1, 4))
+colors = ref_cmap(np.linspace(0, 1, 6))
 
 here = pathlib.Path(__file__).resolve().parent
 root = wt.open(here.parent / "data" / "data.wt5")
@@ -32,6 +32,7 @@ def main(save=True):
     fig, gs = wt.artists.create_figure(width="single", cols=[1,1], default_aspect=2)
     ax0 = plt.subplot(gs[0])
     ax1 = plt.subplot(gs[1])
+    plt.yticks(visible=False)
     ax0.set_facecolor("gray")
     ax1.set_facecolor("gray")
     ax0.grid(b=True)
@@ -43,10 +44,9 @@ def main(save=True):
     y3 = np.nanmean(pl.split("ws2", [0.5])[1].intensity[:], axis=(1,2))
     y4 = 0.4 * y2 + 0.4 * y3
 
-    for y, c in zip([y0, y1, y2, y3], colors):
-        ax0.plot(pl.energy.points, y, lw=3, alpha=0.5, c=c)
-    ax0.plot(pl.energy.points, y4, lw=2, color="k", alpha=0.8)
-
+    for y, c in zip([y0, y1, y2, y3], [colors[3], colors[4], colors[2], colors[5]]):
+        ax0.plot(pl.energy.points, y, lw=2, alpha=0.7, c=c)
+    ax0.plot(pl.energy.points, y4, lw=1, color="darkred", ls=":")
 
     y0 = np.nanmean(raman.split("junctiona", [0.5])[1].intensity[:], axis=(1,2))
     y1 = np.nanmean(raman.split("junctionb", [0.5])[1].intensity[:], axis=(1,2))
@@ -54,12 +54,15 @@ def main(save=True):
     y3 = np.nanmean(raman.split("ws2", [0.5])[1].intensity[:], axis=(1,2))
     y4 = 0.4 * y2 + 0.4 * y3
 
-    for y, c in zip([y0, y1, y2, y3], colors):
-        ax1.plot(raman.energy.points, y, lw=3, alpha=0.5, c=c)
-    ax1.plot(raman.energy.points, y4, lw=2, color="k", alpha=0.8)
+    for y, c in zip([y0, y1, y2, y3], [colors[3], colors[4], colors[2], colors[5]]):
+        ax1.plot(raman.energy.points, y, lw=2, alpha=0.8, c=c)
+    ax1.plot(raman.energy.points, y4, lw=1, color="darkred", ls=":")
 
-    ax1.set_ylim(-0.1, None)
-    ax1.set_xlim(100, 600)
+    ax0.set_ylabel(r"$\mathsf{Intensity \ (a.u.)}$")
+    ax1.set_ylim(-10, None)
+    ax1.set_xlabel(r"$\mathsf{Raman \ shift} \ \left(\mathsf{cm}^{-1}\right)$")
+    ax1.set_xlim(250, 500)
+    ax0.set_xlabel(r"$\hbar \omega \ \left(\mathsf{eV}\right)$")
 
     if save:
         wt.artists.savefig(here / "junction_vs_admixture.png", fig=fig)

@@ -21,17 +21,17 @@ colors = ref_cmap(np.linspace(0, 1, 4))
 here = pathlib.Path(__file__).resolve().parent
 root = wt.open(here.parent / "data" / "data.wt5")
 
-
 def main(save=True):
     raman = root.raman.proc
+    raman.smooth((2,0,0))
     pl = root.pl.proc
     screen = wt.Data(name="screen")
     screen.create_variable(name="x", values=pl.x[0])
     screen.create_variable(name="y", values=pl.y[0])
 
     separators = {
-        "MoS2_E2g": [381, 385],
-        "MoS2_A1g": [403, 409],
+        "MoS2_E2g": [381.7, 385.7],
+        "MoS2_A1g": [403.7, 409.7],
         "WS2_A1g": [415, 417],
         "WS2_nr": [540, 550],
         "WS2_2LA": [349, 352],
@@ -39,15 +39,21 @@ def main(save=True):
     }
 
     for name, window in separators.items():
-        d_temp = raman.split("energy", window)[1]
+        d_temp = raman.split("energy", window, verbose=False)[1]
         d_temp.moment(channel="intensity", axis="energy", moment=0)
         d_temp.intensity_energy_moment_0.normalize()
         screen.create_channel(name, values=d_temp.intensity_energy_moment_0[0])
 
     substrate = (screen["MoS2_E2g"][:] < 0.05) & (screen["MoS2_A1g"][:] < 0.05)
-    mos2 = np.logical_not(substrate) & (screen["MoS2_E2g"][:] < 0.25) & (screen["MoS2_A1g"][:] < 0.41) \
-        & (screen["WS2_A1g"][:] < 0.18)
-    mos2_edge = mos2 & ((screen["MoS2_E2g"][:] < 0.137) | (screen["MoS2_A1g"][:] < 0.27))
+    mos2 = np.logical_not(substrate) \
+        & (screen["MoS2_E2g"][:] < 0.25) \
+        & (screen["MoS2_A1g"][:] < 0.41) \
+        & (screen["WS2_A1g"][:] < 0.14)
+    # mos2 = np.logical_not(substrate) & \
+    #     (screen["MoS2_E2g"][:] < 0.25) & (screen["MoS2_A1g"][:] < 0.41) \
+    #     & (screen["WS2_A1g"][:] < 0.18)
+    # mos2_edge = mos2 & ((screen["MoS2_E2g"][:] < 0.137) | (screen["MoS2_A1g"][:] < 0.27))
+    mos2_edge = mos2 & (screen["MoS2_A1g"][:] < 0.27)
     mos2_core = mos2 & np.logical_not(mos2_edge)
     junction = np.logical_not(substrate + mos2) & (screen["MoS2_E2g"][:] < 0.76) & (screen["MoS2_A1g"][:] < 0.755)
     # junction = np.logical_not(substrate + mos2) & (screen["WS2_2LA"][:] < 0.6) & (screen["WS2_A1g"][:] < 0.6)
@@ -64,8 +70,8 @@ def main(save=True):
     ax1 = plt.subplot(gs[1])
     for ax, separators, lim in zip(
         [ax0, ax1],
-        [["MoS2_E2g", "MoS2_A1g"],
-        ["WS2_2LA", "WS2_A1g"]],
+        [["MoS2_A1g", "MoS2_E2g"],
+        ["WS2_A1g", "WS2_2LA"]],
         [140, 40]
     ):
         separator1 = screen[separators[0]]
@@ -103,11 +109,11 @@ def main(save=True):
     ax2 = plt.subplot(gs[2])
     ax3 = plt.subplot(gs[3])
 
-    # --- calibration curve for determining mos2 edge content
-    x0 = screen["MoS2_E2g"][:][mos2_core].mean()
-    y0 = screen["MoS2_A1g"][:][mos2_core].mean()
-    x1 = screen["MoS2_E2g"][:][substrate].mean()
-    y1 = screen["MoS2_A1g"][:][substrate].mean()
+    # --- calibration curve for determining mos2 edge content ---
+    x0 = screen["MoS2_A1g"][:][mos2_core].mean()
+    y0 = screen["MoS2_E2g"][:][mos2_core].mean()
+    x1 = screen["MoS2_A1g"][:][substrate].mean()
+    y1 = screen["MoS2_E2g"][:][substrate].mean()
     ax0.plot([x0, x1], [y0, y1], color=ref_cmap(1/5), ls="--", lw=3)
 
     # --- calibration curve for determining junction content ---
@@ -141,6 +147,18 @@ def main(save=True):
 
     legend = ax2.legend(handles=patches, framealpha=0.7)
     ax2.grid()
+    r = np.linspace(0, 30)
+
+
+    def rot(r, deg):
+        x = r * np.cos(deg * np.pi / 180)
+        y = r * np.sin(deg * np.pi / 180)
+        return x, y
+
+
+    for third in [0, 120, 240]:
+        for deg in [9, 49]:
+            ax2.plot(*rot(r, third + deg), "k:")
 
     ax3.set_xlim(100, 500)
     ax3.grid(True)

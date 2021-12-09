@@ -3,43 +3,40 @@ import WrightTools as wt
 import pathlib
 import matplotlib.pyplot as plt
 from fitlib import fom
+from scipy.optimize import least_squares
 
 here = pathlib.Path(__file__).resolve().parent
 root = wt.open(here.parent / "data" / "data.wt5")
+root.print_tree()
 screen = wt.open(here / "screen.wt5")
+screen.print_tree()
 
 verbose = False
-
-if False:
-    d = root.PL.proc_PL
-    d.print_tree()
-    out = wt.artists.interact2D(d, xaxis="energy")
-    plt.show()
 
 # fits
 # use Raman data to distinguish different areas
 raman = root.raman.proc
 pl = root.pl.proc
 
-# --- fit WS2 ---
-if False:
-    # restrict consideration to WS2 region
-    pl.create_variable("ws2", screen.ws2[:][None, :, :])
-    pl.print_tree()
-    pl = pl.split("ws2", [0.5], verbose=verbose)[1]
-
+def fit_screen(screen_name, screen:np.ndarray, data, bounds, verbose=False):
+    data.create_variable(screen_name, screen[None, :, :])
+    data.print_tree()
+    data = data.split(screen_name, [0.5], verbose=verbose)[1]
 
     # allocate output arrays
-    shape = (pl.x.size, pl.y.size)
+    shape = (data.x.size, data.y.size)
     values = {k: np.zeros(shape) for k in ["a1", "r1", "w1", "a2", "r2", "w2", "resid"]}
 
-    from scipy.optimize import least_squares
+    # allocate output arrays
+    shape = (data.x.size, data.y.size)
+    values = {k: np.zeros(shape) for k in ["a1", "r1", "w1", "a2", "r2", "w2", "resid"]}
+
     for i, j in np.ndindex(shape):
-        d_temp = pl.chop(
+        d_temp = data.chop(
             "energy", 
             at={
-                "x":[pl.x.points[i], "um"],
-                "y":[pl.y.points[j], "um"]
+                "x":[data.x.points[i], "um"],
+                "y":[data.y.points[j], "um"]
             },
             verbose=False
         )[0]
@@ -51,12 +48,11 @@ if False:
         p0 = [
             d_temp.intensity.max() / 2,
             d_temp.intensity.max() / 2,
-            1.86,
-            1.95,
+            0.5 * (bounds[0][2] + bounds[1][2]),
+            0.5 * (bounds[0][3] + bounds[1][3]),
             0.05,
             0.1
         ]
-        bounds = ([0, 0, 1.85, 1.91, 0.01, 0.01], [np.inf, np.inf, 1.91, 2, 0.4, 0.4])
         result = least_squares(
             fom, p0,
             bounds=bounds,
@@ -74,20 +70,23 @@ if False:
             val = out_sorted[m//3][m%3]
             values[k][i, j] = val
     for k, val in values.items():
-        pl.create_channel(k, values=val[None, :, :])
+        data.create_channel(k, values=val[None, :, :])
+    data.save(here / f"{screen_name}_fitted.wt5")
 
-    pl.save(here / "ws2_core_fitted.wt5")
 
-
-def fit_section(data, screen, p0):
-    pass
-
+# --- fit WS2 ---
 if True:
+    bounds = ([0, 0, 1.85, 1.93, 0.01, 0.01], [np.inf, np.inf, 1.93, 2, 0.2, 0.2])
+    # fit_screen("ws2", screen.ws2[:], pl, bounds)
+    fit_screen("ws2_edge", screen.junctionb[:], pl, bounds)
+
+
+if False:
     # --- fit MoS2 ---
     # restrict consideration to MoS2 region
     pl.print_tree()
-    pl.create_variable("mos2", screen.mos2[:][None, :, :])
-    pl = pl.split("mos2", [0.5], verbose=verbose)[1]
+    pl.create_variable("mos2_core", screen.mos2_core[:][None, :, :])
+    pl = pl.split("mos2_core", [0.5], verbose=verbose)[1]
 
 
     # allocate output arrays
@@ -114,10 +113,10 @@ if True:
             d_temp.intensity.max() / 2,
             1.82,
             1.87,
-            0.05,
-            0.1
+            0.1,
+            0.05
         ]
-        bounds = ([0, 0, 1.75, 1.835, 0.01, 0.01], [np.inf, np.inf, 1.835, 1.87, 0.4, 0.4])
+        bounds = ([0, 0, 1.75, 1.835, 0.01, 0.01], [np.inf, np.inf, 1.835, 1.87, 0.1, 0.1])
         result = least_squares(
             fom, p0,
             bounds=bounds,

@@ -2,16 +2,21 @@ import numpy as np
 import WrightTools as wt
 import pathlib
 import matplotlib.pyplot as plt
-from fitlib import two_res
+from fitlib import two_res, gauss
 
 here = pathlib.Path(__file__).resolve().parent
 root = wt.open(here.parent / "data" / "data.wt5")
 
-out = wt.artists.interact2D(root.raman.proc, xaxis="energy")
-plt.show()
-1/0
+path = here / "mos2_fitted.wt5"
 
-d = wt.open(here / "mos2_fitted.wt5")
+
+if True:
+    out = wt.artists.interact2D(root.raman.proc, xaxis="energy")
+    plt.show()
+    1/0
+
+
+d = wt.open(path)
 # null = np.nanmean(0.5 * d.r1[:] + 0.5 * d.r2[:])
 d.r1.null = np.nanmean(d.r1[:])
 d.r2.null = np.nanmean(d.r2[:])
@@ -55,7 +60,7 @@ for i, chan in enumerate([
         ticks=np.linspace(*vlim, 6) 
     )
 
-if True:  # scatter plot of strain (A peak position) vs doping (trion fraction
+if False:  # scatter plot of strain (A peak position) vs doping (trion fraction
     fig, gs = wt.artists.create_figure(nrows=2)
     ax0 = plt.subplot(gs[0])
     ax0.scatter(d.r2[:].flatten(), d.trion_fraction[:].flatten())
@@ -71,20 +76,33 @@ if False:
     out2 = wt.artists.interact2D(d, channel="intensity_energy_moment_0")
 
 if True:  # check fit quality along several points
-    xcoord = -20
-    fit = wt.open(here / "mos2_fitted.wt5").chop("energy", "y", at={"x":[xcoord, "um"]})[0]
+    xcoord = 0
+    fit = wt.open(path).chop("energy", "y", at={"x":[xcoord, "um"]})[0]
     data = root.pl.proc.chop("energy", "y", at={"x":[xcoord, "um"]})[0]
+    ramanx = root.raman.proc.chop("energy", "y", at={"x":[xcoord, "um"]})[0]
 
-    plt.figure()
+    fig, gs = wt.artists.create_figure(cols=[1, 1], default_aspect=2)
+    ax0 = plt.subplot(gs[0])
+    ax1 = plt.subplot(gs[1])
     offset = 0
     for fi in fit.chop("energy").values():
         # print(fi.y[0])
+        if fi.y[0] > 0:
+            continue
         di = data.chop("energy", at={"y":[fi.y[0], "um"]}, verbose=False)[0]
-        plt.plot(di.energy.points, di.intensity[:] + offset)
-        plt.text(1.7, offset+300, f"y={fi.y[0]}", fontsize=8)
+        ramanxy = ramanx.chop("energy", at={"y":[fi.y[0], "um"]}, verbose=False)[0]
+        ramanxy.smooth(2, verbose=False)
+        ax0.plot(di.energy.points, di.intensity[:] + offset)
+        ax1.plot(ramanxy.energy.points, ramanxy.intensity[:], color="k", alpha=0.3)  # + offset * 0.1)
+        ax0.text(1.7, offset+300, f"y={fi.y[0]}", fontsize=8)
         p = [fi.a1[0], fi.a2[0], fi.r1[0], fi.r2[0], fi.w1[0], fi.w2[0]]
         yfit = two_res(di.energy.points, p) + offset
-        plt.plot(di.energy.points, yfit, color="k")
+        yfit_trion = gauss(di.energy.points, p[0::2]) + offset
+        yfit_exciton = gauss(di.energy.points, p[1::2]) + offset
+        ax0.plot(di.energy.points, yfit, color="k")
+        ax0.fill_between(di.energy.points, yfit_trion, offset, color="r", alpha=0.1)
+        ax0.fill_between(di.energy.points, yfit_exciton, offset, color="b", alpha=0.1)
+        ax0.plot(di.energy.points, yfit, color="k")
         offset += 500
 
 
