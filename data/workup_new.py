@@ -113,6 +113,8 @@ if all_import:
     d.transform("x", "y", "energy")
     d.level("intensity", 2, 5)
     # d.level("intensity", 0, 5) # need to level on energy axis to avoid removing Si peaks
+    evar = d["energy"]
+    evar += 0.7  # based on calibration of Si peak; see "calibrate_raman.py"
     yvar = d["y"]
     yvar += 6  # tweaked height to match with PL
     d = d.split("y", [-40, 56])[1]
@@ -154,11 +156,14 @@ if all_import:
 
 
 if all_import:
+    from scipy.interpolate import interp1d
     # need to offset axes to have images agree with SHG
     # offsets found by superposing SHG and lamp image patterns
     # image coords + offset = SHG coords
     y_offset = 12
     x_offset = 11
+    um_per_pixel = 0.3  # 20x
+    ylims = [200, 950]  # truncate image
 
     # SHG
     raw = wt.Collection(name="raw")
@@ -174,33 +179,54 @@ if all_import:
             temp.transform(*temp.axis_names, "angle")
     shg_pol = wt.Collection(name="shg", parent=root)
     pol = wt.data.join([d for d in raw.values()])
-    pol = pol.copy(parent=shg_pol, name="polarization")
+    pol = pol.split("yindex", ylims)[1]
 
     # images
     shg_pol.create_collection(name="imgs")
-    from_Solis(
-        data_dir / "shg microscopy" / "lamp and pump v2.asc",
-        name="lamp_and_pump", parent=shg_pol.imgs,
-        cosmic_filter=False, background_subtract=False
-    )
-    from_Solis(
-        data_dir / "shg microscopy" / "lamp unfiltered without slit.asc",
-        name="lamp", parent=shg_pol.imgs,
-        cosmic_filter=False, background_subtract=False
-    )
-    from_Solis(
-        data_dir / "shg microscopy" / "pump - slit 200um - concatenated image.asc",
-        name="pump", parent=shg_pol.imgs,
-        cosmic_filter=False, background_subtract=True, sumx=True,
-    )
-    from_Solis(
-        data_dir / "shg microscopy" / "400 nm lamp slit transmission.asc",
-        name="slit", parent=shg_pol.imgs,
-        cosmic_filter=False, background_subtract=False
-    )
+    for filename, name, kwargs in zip(
+        [
+            "lamp and pump v2",
+            "lamp unfiltered without slit",
+            "pump - slit 200um - concatenated image",
+            "pump - slit 200um - concatenated image"
+        ],
+        ["lamp_and_pump", "lamp", "pump", "slit"],
+        [
+            dict(cosmic_filter=False, background_subtract=False),
+            dict(cosmic_filter=False, background_subtract=False),
+            dict(cosmic_filter=False, background_subtract=True, sumx=True),
+            dict(cosmic_filter=False, background_subtract=False)
+        ]
+    ):
+        temp = from_Solis(
+            data_dir / "shg microscopy" / (filename + ".asc"), name=name, **kwargs
+        ).split("yindex", ylims, verbose=verbose)[1]
+        temp.copy(parent=shg_pol.imgs, name=name)
+        temp.close()
+
+    # center
+    def pixel_to_um(var):
+        out = var * um_per_pixel
+        out -= out.mean()
+        return out
+
+    for d in [pol, shg_pol.imgs.lamp, shg_pol.imgs.pump, shg_pol.imgs.slit]:
+        d.create_variable("xdistance", values=pixel_to_um(d["xindex"][:]), units="um")
+        d.create_variable("ydistance", values=pixel_to_um(d["yindex"][:]), units="um")
+        d.print_tree()
+        d.transform("ydistance", "xdistance")
+
+    def raw_angle_to_physical(deg):
+        """ 
+        Relate recorded angle to the image axes.
+        Raw number is off by an offset
+        0 deg corresponds to H-pol in the lab frame, which is V-pol for our image in this figure
+        """
+        offset = 49.
+        return deg - offset
 
     # power dependence with angle
-    offset = 49 * np.pi / 180
+    # offset = 49 * np.pi / 180
     # data transcribed from notes
     xy = np.array([
         [0, 1.42],
@@ -228,9 +254,43 @@ if all_import:
 
     power = shg_pol.create_data(name="pump_power")
     power.create_variable(name="raw_angle", values=angles)
-    power.create_variable(name="angle", values=angles - offset)
+    power.create_variable(name="angle", values=raw_angle_to_physical(angles))
     power.create_channel(name="power", values=powers)
     power.transform("raw_angle")
+
+
+    def get_power_function(angle, power):
+        """power interpolation for angle
+        """
+        x = list(angle)
+        y = list(power)
+        x.append(360)
+        y.append(y[0])
+        x = np.array(x)
+        f = interp1d(x, np.array(y))
+        return f
+
+    def get_bs_transmission_function():
+        """plate beamsplitter corrections
+        based on transmission measurements for both H-pol and V-pol
+        """
+        x = np.linspace(0, 360)
+        y = (0.5 * np.sin(x * np.pi / 180))**2 + (.83 * np.cos(x * np.pi / 180))**2
+        f = interp1d(x, np.array(y))
+        return f
+
+    f1 = get_power_function(shg_pol.pump_power.raw_angle[:], shg_pol.pump_power.power[:])
+    f2 = get_bs_transmission_function()
+
+    pol.signal_xindex_moment_0[:] /= shg_pol.imgs.pump.signal_xindex_moment_0[0, 0, :][None, :, None]
+    pol.signal_xindex_moment_0[:] /= f1(pol.angle[:])**2
+    pol.signal_xindex_moment_0[:] /= f2(raw_angle_to_physical(pol.angle[:]) % 360)
+    pol.signal_xindex_moment_0.normalize()
+    pol.transform("ydistance", "xdistance", "angle")
+    pol.print_tree()
+    pol.moment("angle", channel="signal_xindex_moment_0", moment=0)  # signal at all angles
+    pol.copy(parent=shg_pol, name="polarization")
+    # pol = shg_pol.polarization
 
     # shg_pol.print_tree()
     # shg_pol.save(data_dir / "polarization.wt5")
