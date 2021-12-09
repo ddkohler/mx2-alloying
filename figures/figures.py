@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import string
 
 
-all_plot = False
-save = False
+all_plot = True
+save = True
 fig_type = ".png"
 
 here = pathlib.Path(__file__).resolve().parent
@@ -326,40 +326,28 @@ if False:
 if all_plot:
     verbose=False
     from scipy.interpolate import interp1d
-    um_per_pixel = 0.3
 
-    ylims = [200, 950]
+    def raw_angle_to_physical(deg):
+        """ 
+        Relate recorded angle to the image axes.
+        Raw number is off by an offset
+        0 deg corresponds to H-pol in the lab frame, which is V-pol for our image in this figure
+        """
+        offset = 49.
+        return deg - offset
+
     slit = shg_pol.imgs.slit # .split("yindex", ylims, verbose=verbose)[1]
     lamp = shg_pol.imgs.lamp # .split("yindex", ylims, verbose=verbose)[1]
     pump = shg_pol.imgs.pump # .split("yindex", ylims, verbose=verbose)[1]
+    temp = shg_pol.polarization
 
     slit.signal.normalize()
     for data in [slit, lamp, pump]:
-        data.transform("yindex", "xindex")
+        data.transform("ydistance", "xdistance")
 
     shg_pol.polarization.transform("yindex", "angle")
 
-    # temp = shg_pol.polarization.split("yindex", ylims)[1]
-    # pump.create_channel(name="signal_square", values=pump.signal[:]**2)
-    # pump.moment("xindex", channel="signal_square", moment=0)
-
-    # temp.signal_xindex_moment_0[:] /= pump.signal_xindex_moment_0[0, 0, :][None, :, None]
-    # temp.signal_xindex_moment_0[:] /= f1(shg_pol.polarization.angle[:])**2
-    # temp.signal_xindex_moment_0[:] /= f2(
-    #     raw_angle_to_physical(shg_pol.polarization.angle[:]) % 360
-    # )
     temp.signal_xindex_moment_0.normalize()
-
-    def pixel_to_um(var):
-        out = var * um_per_pixel
-        out -= out.mean()
-        return out
-
-    for d in [temp, lamp, pump]:
-        d.create_variable("xdistance", values=pixel_to_um(d["xindex"][:]), units="um")
-        d.create_variable("ydistance", values=pixel_to_um(d["yindex"][:]), units="um")
-        d.transform("ydistance", "xdistance")
-
 
     fig, gs = wt.artists.create_figure(
         width="dissertation",
@@ -419,10 +407,9 @@ if all_plot:
 # --- shg polarization summary image - manuscript -------------------------------------------------
 
 
-if True:
+if all_plot:
     verbose = False
     from scipy.interpolate import interp1d
-    um_per_pixel = 0.3  # 20x
 
     def raw_angle_to_physical(deg):
         """ 
@@ -439,28 +426,6 @@ if True:
     lamp = shg_pol.imgs.lamp.split("yindex", ylims, verbose=verbose)[1]
     pump = shg_pol.imgs.pump.split("yindex", ylims, verbose=verbose)[1]
 
-    # def get_power_function(angle, power):
-    #     """power interpolation for angle
-    #     """
-    #     x = list(angle)
-    #     y = list(power)
-    #     x.append(360)
-    #     y.append(y[0])
-    #     x = np.array(x)
-    #     f = interp1d(x, np.array(y))
-    #     return f
-
-    # def get_bs_transmission_function():
-    #     """plate beamsplitter corrections
-    #     based on transmission measurements for both H-pol and V-pol
-    #     """
-    #     x = np.linspace(0, 360)
-    #     y = (0.5 * np.sin(x * np.pi / 180))**2 + (.83 * np.cos(x * np.pi / 180))**2
-    #     f = interp1d(x, np.array(y))
-    #     return f
-
-    # f1 = get_power_function(shg_pol.pump_power.raw_angle[:], shg_pol.pump_power.power[:])
-    # f2 = get_bs_transmission_function()
     slit.signal.normalize()
     for data in [slit, lamp, pump]:
         print(data.variables)
@@ -469,12 +434,6 @@ if True:
     shg_pol.polarization.transform("ydistance", "angle")
 
     temp = shg_pol.polarization.split("yindex", ylims)[1]
-    # pump.create_channel(name="signal_square", values=pump.signal[:]**2)
-    # pump.moment("xindex", channel="signal_square", moment=0)
-
-    # temp.signal_xindex_moment_0[:] /= pump.signal_xindex_moment_0[0, 0, :][None, :, None]
-    # temp.signal_xindex_moment_0[:] /= f1(shg_pol.polarization.angle[:])**2
-    # temp.signal_xindex_moment_0[:] /= f2(raw_angle_to_physical(shg_pol.polarization.angle[:])%360)
     temp.signal_xindex_moment_0.normalize()
     temp.moment("angle", channel="signal_xindex_moment_0", moment=0)  # signal at all angles
 
@@ -488,16 +447,27 @@ if True:
 
     fig, gs = wt.artists.create_figure(
         width=6.66,
-        nrows = 3,
-        cols = [1,1],
-        default_aspect = 2 * 100 / (ylims[1] - ylims[0]),
+        nrows = 2,
+        cols = [1],
+        default_aspect = 100 / (ylims[1] - ylims[0]),
         margin=[0.8, 0.15, 0.8, 0.8]
     )
 
     ax1 = plt.subplot(gs[0, :])
     plt.xticks(visible=False)
     ax2 = plt.subplot(gs[1, :], sharex=ax1)
-
+    from mpl_toolkits.axes_grid1 import inset_locator
+    import matplotlib as mpl
+    ax3 = inset_locator.inset_axes(
+        ax2,
+        "35%",
+        "60%",
+        axes_class = mpl.projections.get_projection_class('polar'),
+        loc="lower right"
+    )
+    plt.setp(ax3.get_xticklabels(), visible=False)
+    plt.setp(ax3.get_yticklabels(), visible=False)
+    # ax3 = ax2.inset_axes(projection="polar")
     ax1.pcolormesh(
         lamp, cmap="gist_gray", vmax=shg_pol.imgs.lamp.signal.max() * 0.8, vmin=shg_pol.imgs.lamp.signal.max() * 0.68
     )
@@ -536,7 +506,7 @@ if True:
     wt.artists.corner_text("a", ax=ax1)
     wt.artists.corner_text("b", ax=ax2)
 
-    ax3 = plt.subplot(gs[2, 0], projection="polar")
+    # ax3 = plt.subplot(gs[2, 0], projection="polar")
     temp.print_tree()
     theta = temp.angle.points * np.pi / 180
     sim_theta = np.linspace(-np.pi, np.pi, 101)
@@ -545,22 +515,15 @@ if True:
         [[3, 6], [10, 20], [-10, 0]]
     ):
         split = temp.split("ydistance", x_range)[1]
-        # split.print_tree()
         y = split.signal_xindex_moment_0[0].mean(axis=0)
         y /= y.mean()
-        print(y[::3])
-        ax3.plot(theta, y)
+        ax3.plot(theta, y, alpha=0.8, lw=2)
 
-    ax3.plot(sim_theta, 2 * np.cos(3 * sim_theta - 30 * np.pi / 180)**2)
+    ax3.plot(sim_theta, 2 * np.cos(3 * sim_theta - 30 * np.pi / 180)**2, color="k")
 
     for ax in [ax1, ax2, ax3]:
         ax.grid(color="k", linestyle=":")
 
-
-    ax4 = plt.subplot(gs[2, 1])
-    temp.transform("ydistance", "angle")
-    temp.channels[1][:] /= temp.channels[1][:].max(axis=1)
-    ax4.pcolormesh(temp, channel=1)
 
     if save:
         wt.artists.savefig(here / "polarization_summary.main.png")
