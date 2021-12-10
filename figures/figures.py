@@ -510,14 +510,21 @@ if all_plot:
     temp.print_tree()
     theta = temp.angle.points * np.pi / 180
     sim_theta = np.linspace(-np.pi, np.pi, 101)
-    for label, x_range in zip(
+
+    from figlib import colors
+
+    ylim = ax2.get_ylim()
+    for label, x_range, color in zip(
         ["edge WS2", "WS2", "MoS2"],
-        [[3, 6], [10, 20], [-10, 0]]
+        [[3, 6], [10, 20], [-10, 0]],
+        [colors[4], colors[5], colors[2]]
     ):
         split = temp.split("ydistance", x_range)[1]
         y = split.signal_xindex_moment_0[0].mean(axis=0)
         y /= y.mean()
-        ax3.plot(theta, y, alpha=0.8, lw=2)
+        ax2.fill_betweenx(ylim, *x_range, color=color, alpha=1)
+        ax3.plot(theta, y, color=color, alpha=1, lw=2)
+    ax2.set_ylim(*ylim)
 
     ax3.plot(sim_theta, 2 * np.cos(3 * sim_theta - 30 * np.pi / 180)**2, color="k")
 

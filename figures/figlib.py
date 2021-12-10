@@ -1,5 +1,13 @@
 import numpy as np
 from scipy.interpolate import interp1d
+from matplotlib import cm
+
+
+# --- colors --------------------------------------------------------------------------------------
+
+
+ref_cmap = cm.get_cmap("magma")
+colors = ref_cmap(np.linspace(0, 1, 6))
 
 
 # --- parameters ----------------------------------------------------------------------------------
@@ -29,8 +37,8 @@ n_mos2_ml = from_refractiveindex_info(
 )
 
 n_ws2_ml = from_refractiveindex_info(
-    # r"https://refractiveindex.info/database/data/main/WS2/Ermolaev.yml", 
-    r"https://refractiveindex.info/database/data/main/WS2/Islam-1L.yml",
+    r"https://refractiveindex.info/database/data/main/WS2/Ermolaev.yml", 
+    # r"https://refractiveindex.info/database/data/main/WS2/Islam-1L.yml",  # no longer hosted?
     skip_header=10, skip_footer=5
 )
 
