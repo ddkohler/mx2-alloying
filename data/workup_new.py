@@ -108,6 +108,8 @@ if all_import:
     # bad pixels
     for idx in [247, 248, 364, 365, 638, 639]:
         d.intensity[idx] = np.nan
+    idx = np.unravel_index(np.nanargmax(d.intensity[:]), d.shape)
+    d.intensity[:, idx[1], idx[2]] = np.nan
     d.transform("energy", "x", "y")
     d.heal(method="nearest")
     d.transform("x", "y", "energy")
