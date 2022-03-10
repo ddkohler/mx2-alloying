@@ -24,15 +24,17 @@ root = wt.open(here.parent / "data" / "data.wt5")
 def main(save=True):
     raman = root.raman.proc
     raman.smooth((2,0,0))
+    raman.level("leveled", 0, 30)
     pl = root.pl.proc
     screen = wt.Data(name="screen")
     screen.create_variable(name="x", values=pl.x[0])
     screen.create_variable(name="y", values=pl.y[0])
+    screen.transform("x", "y")
 
     separators = {
         "MoS2_E2g": [381.7, 385.7],
         "MoS2_A1g": [403.7, 409.7],
-        "WS2_A1g": [415, 417],
+        "WS2_A1g": [415, 418],
         "WS2_nr": [540, 550],
         "WS2_2LA": [349, 352],
         "WS2_LA": [170, 178],
@@ -131,7 +133,7 @@ def main(save=True):
         r"$\mathsf{MoS}_2 \ \mathsf{(edge)}$": "mos2_edge",
         r"$\mathsf{MoS}_2$": "mos2_core",
         r"$\mathsf{Mo}_x \mathsf{W}_{1-x}\mathsf{S}_2$": "junctiona",
-        r"$\mathsf{WS}_2 \ \mathsf{(odd)}$": "junctionb",
+        r"$\mathsf{WS}_2 \ \mathsf{(edge)}$": "junctionb",
         r"$\mathsf{WS}_2 \ \mathsf{(core)}$": "ws2",
     }.items()):
         zone = screen[name][:]
@@ -178,7 +180,89 @@ def main(save=True):
         wt.artists.savefig(here / "separator.v2.png", fig=fig)
         screen.save(here / "screen.wt5", overwrite=True)
     else:
+        # interactive mode:  display selected lineshapes by selecting from 2D spatial map pixels
+        from matplotlib.patches import Rectangle
+
+        class Slice:
+            def __init__(self, fig):
+                self.fig = fig
+                self.x = 0
+                self.y = 0
+                self.visible = False
+                self.rect = Rectangle(
+                    [0, 0], 2, 2, ec=[0,0,0,1], fc=[0,0,0,0], lw=2, visible=False
+                )
+                self.spectrum, = ax3.plot([0], [0], color="k", linewidth=2)
+                self.scatter_mos2, = ax0.plot(
+                    [0], [0],
+                    marker="o", ls="", visible=False, color=[0,0,0,1]
+                )
+                self.scatter_ws2, = ax1.plot(
+                    [0], [0],
+                    marker="o", ls="", visible=False, color=[0,0,0,1]
+                )
+                ax2.add_patch(self.rect)
+
+            def __call__(self, info):
+                if info.key in ["left", "right", "up", "down"]:  # key press
+                    dx = dy = 0
+                    if info.key == "left":
+                        dx -= 2
+                    elif info.key == "right":
+                        dx += 2
+                    elif info.key == "up":
+                        dy += 2
+                    elif info.key == "down":
+                        dy -= 2
+                    self.x += dx
+                    self.y += dy         
+                elif info.inaxes == ax2:  # mouse press
+                    new_idx = np.abs(raman.x.points - info.xdata).argmin()
+                    new_idy = np.abs(raman.y.points - info.ydata).argmin()
+                    newx = raman.x.points[new_idx]
+                    newy = raman.y.points[new_idy]
+                    if not self.visible:  # reactivate
+                        self.visible=True
+                    elif newx == self.x and newy == self.y:
+                        self.visible=False
+                    self.x = newx
+                    self.y = newy
+                else:
+                    import matplotlib as mpl
+                    mpl.backend_bases.key_press_handler(info, fig.canvas, fig.canvas.toolbar)
+                    self.fig.canvas.draw_idle()
+                self.rect.set_x(self.x - 1)
+                self.rect.set_y(self.y - 1)
+                self.rect.set(visible=self.visible)
+                self.spectrum.set(visible=self.visible)
+                self.scatter_mos2.set(visible=self.visible)
+                self.scatter_ws2.set(visible=self.visible)
+                self._plot_spectrum(self.x, self.y)
+                self._plot_scatter(self.x, self.y)
+                self.fig.canvas.draw_idle()
+
+            def _plot_scatter(self, x, y):
+                screen.print_tree()
+                chopped = screen.chop(at={"x": [x, "um"], "y": [y, "um"]})[0]
+                xm = chopped["MoS2_A1g"][:]
+                ym = chopped["MoS2_E2g"][:]
+                xw = chopped["WS2_A1g"][:]
+                yw = chopped["WS2_2LA"][:]
+                self.scatter_mos2.set_data([[xm], [ym]])
+                self.scatter_ws2.set_data([[xw], [yw]])
+
+                print(xm, ym, xw, yw)
+
+            def _plot_spectrum(self, x, y):
+                spec = raman.chop("energy", at={"x": [x, "um"], "y": [y, "um"]})[0]
+                self.spectrum.set_data(spec.energy.points, spec.intensity[:])
+
+        event_handler = Slice(fig)
+        cid = fig.canvas.mpl_connect('button_press_event', event_handler)
+        cid = fig.canvas.mpl_connect('key_release_event', event_handler)
+
         plt.show()
+        return cid
 
 
 if __name__ == "__main__":
@@ -187,4 +271,4 @@ if __name__ == "__main__":
         save = argv[1] != "0"
     else:
         save = True
-    main(save)
+    out = main(save)
