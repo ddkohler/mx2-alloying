@@ -32,7 +32,7 @@ def run(save):
     ax0 = plt.subplot(gs[1, 0])
     ax0.imshow(img, extent=extent)
     ax0.set_ylim(-30, 30)
-    ax0.vlines([x0], ymin=-30, ymax=30, linewidth=3, color="w", alpha=0.5)
+    ax0.vlines([x0], ymin=-30, ymax=30, linewidth=4, color="w", alpha=0.6)
     ax0.set_xlim(x0-30, x0+30)
     ax0.set_xticks([0, 20])
     ax0.set_yticks([-20, 0, 20])
@@ -46,11 +46,14 @@ def run(save):
     #     transform=ax1.transAxes,
     #     bbox=dict(fc="w", ec="k", boxstyle="square", alpha=0.5)
     # )
-    ax1.grid()
     ax1.set_ylim(-30, 30)
     ax1.set_xticks(np.linspace(100, 400, 4))
+    y = d0["y"]
+    y -= 1
     ax1.pcolormesh(d0, channel="intensity", cmap="magma", vmin=d0.intensity.min())
-    ax1.grid(color="k", linestyle=":")
+
+    for ax in [ax0, ax1]:
+        ax.grid(color="k", linestyle=":")
     wt.artists.corner_text("a", ax=ax0, background_alpha=0.5)
     wt.artists.corner_text("b", ax=ax1, background_alpha=0.5)
 
