@@ -8,18 +8,22 @@ from matplotlib import cm
 
 ref_cmap = cm.get_cmap("magma")
 colors = ref_cmap(np.linspace(0, 1, 6))
-
+grid_kwargs = {
+    "ls": ":",
+    "lw": "1",
+    "c": "k"
+}
 
 # --- parameters ----------------------------------------------------------------------------------
 
 
-d_SiO2 = 299e-7  # thickness of SiO2 layer, cm
-d_mono = 7e-8  # thickness of MX2 monolayer, cm
+d_SiO2 = 297e-7  # thickness of SiO2 layer, cm
+d_mono = 7.5e-8  # thickness of MX2 monolayer, cm
 
 # spectral shift (eV) to apply to literature refractive index of MX2
 # positive values shift features to lower energy (redshift)
 offset_mos2 = 0.04
-offset_ws2 = 0.08
+offset_ws2 = 0.06
 
 
 # --- refractive index data -----------------------------------------------------------------------
