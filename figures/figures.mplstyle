@@ -1,0 +1,12 @@
+axes.titlesize : 18
+axes.labelsize : 18
+lines.linewidth : 2
+xtick.labelsize : 14
+ytick.labelsize : 14
+legend.fontsize : 18
+font.size : 18
+
+grid.color:     k
+grid.linestyle: :
+grid.linewidth: 0.8
+grid.alpha:     1.0
