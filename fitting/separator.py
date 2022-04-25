@@ -15,7 +15,7 @@ import matplotlib.patches as mpatches
 from matplotlib import cm
 
 
-ref_cmap = cm.get_cmap("magma")
+ref_cmap = cm.get_cmap("turbo_r")
 colors = ref_cmap(np.linspace(0, 1, 4))
 
 here = pathlib.Path(__file__).resolve().parent
@@ -42,27 +42,27 @@ def main(save=True):
 
     for name, window in separators.items():
         d_temp = raman.split("energy", window, verbose=False)[1]
-        d_temp.moment(channel="intensity", axis="energy", moment=0)
-        d_temp.intensity_energy_moment_0.normalize()
-        screen.create_channel(name, values=d_temp.intensity_energy_moment_0[0])
+        d_temp.moment(channel="leveled", axis="energy", moment=0)
+        d_temp.leveled_energy_moment_0.normalize()
+        screen.create_channel(name, values=d_temp.leveled_energy_moment_0[0])
 
-    substrate = (screen["MoS2_E2g"][:] < 0.05) & (screen["MoS2_A1g"][:] < 0.05)
+    substrate = (screen["MoS2_E2g"][:] < 0.06) & (screen["MoS2_A1g"][:] < 0.06)
     mos2 = np.logical_not(substrate) \
-        & (screen["MoS2_E2g"][:] < 0.25) \
-        & (screen["MoS2_A1g"][:] < 0.41) \
-        & (screen["WS2_A1g"][:] < 0.14)
+        & (screen["MoS2_E2g"][:] < 0.45) \
+        & (screen["MoS2_A1g"][:] < 0.55) \
+        & (screen["WS2_A1g"][:] < 0.17)
     # mos2 = np.logical_not(substrate) & \
     #     (screen["MoS2_E2g"][:] < 0.25) & (screen["MoS2_A1g"][:] < 0.41) \
     #     & (screen["WS2_A1g"][:] < 0.18)
     # mos2_edge = mos2 & ((screen["MoS2_E2g"][:] < 0.137) | (screen["MoS2_A1g"][:] < 0.27))
-    mos2_edge = mos2 & (screen["MoS2_A1g"][:] < 0.27)
+    mos2_edge = mos2 & (screen["MoS2_A1g"][:] < 0.36)
     mos2_core = mos2 & np.logical_not(mos2_edge)
-    junction = np.logical_not(substrate + mos2) & (screen["MoS2_E2g"][:] < 0.76) & (screen["MoS2_A1g"][:] < 0.755)
+    junction = np.logical_not(substrate + mos2) & (screen["MoS2_E2g"][:] < 0.73) & (screen["MoS2_A1g"][:] < 0.56)
     # junction = np.logical_not(substrate + mos2) & (screen["WS2_2LA"][:] < 0.6) & (screen["WS2_A1g"][:] < 0.6)
     # ws2_core = np.logical_not(junction + substrate + mos2)
     ws2 = np.logical_not(substrate + mos2 + junction)
     junctiona = junction & (screen["WS2_2LA"][:] < 0.6)
-    junctionb = junction & np.logical_not(junctiona)
+    junctionb = junction & np.logical_not(junctiona) # & (screen["MoS2_A1g"][:] < 0.4)
 
     fig, gs = wt.artists.create_figure(
         width="double", cols=[1, 1], wspace=0.75, hspace=0.75, nrows=2,
@@ -80,9 +80,9 @@ def main(save=True):
         separator2 = screen[separators[1]]
 
         axx = wt.artists.add_sideplot(ax, "x", pad=0.05)
-        axx.hist(separator1[:].flatten(), bins=100, c="k")
+        axx.hist(separator1[:].flatten(), bins=100, color="k")
         axy = wt.artists.add_sideplot(ax, along="y", pad=0.05)
-        axy.hist(separator2[:].flatten(), bins=100, c="k", orientation="horizontal")
+        axy.hist(separator2[:].flatten(), bins=100, color="k", orientation="horizontal")
         axx.set_ylim(None, lim)
         axy.set_xlim(None, lim)
         axx.set_facecolor("gray")
@@ -143,7 +143,7 @@ def main(save=True):
         ax2.pcolormesh(screen.x.points, screen.y.points, zone.T, cmap=cmap)
         raman.create_variable(name=name, values=zone[None, :, :])
         split = raman.split(name, [0.5])[1]
-        y = np.nanmean(split.intensity[:], axis=(1,2))
+        y = np.nanmean(split.leveled[:], axis=(1,2))
         ax3.plot(split.energy.points, y, color=color, lw=2, alpha=0.8)
         mean_spectra.append(y)
 
@@ -255,7 +255,7 @@ def main(save=True):
 
             def _plot_spectrum(self, x, y):
                 spec = raman.chop("energy", at={"x": [x, "um"], "y": [y, "um"]})[0]
-                self.spectrum.set_data(spec.energy.points, spec.intensity[:])
+                self.spectrum.set_data(spec.energy.points, spec.leveled[:])
 
         event_handler = Slice(fig)
         cid = fig.canvas.mpl_connect('button_press_event', event_handler)
