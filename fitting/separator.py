@@ -80,9 +80,9 @@ def main(save=True):
         separator2 = screen[separators[1]]
 
         axx = wt.artists.add_sideplot(ax, "x", pad=0.05)
-        axx.hist(separator1[:].flatten(), bins=100)
+        axx.hist(separator1[:].flatten(), bins=100, c="k")
         axy = wt.artists.add_sideplot(ax, along="y", pad=0.05)
-        axy.hist(separator2[:].flatten(), bins=100, orientation="horizontal")
+        axy.hist(separator2[:].flatten(), bins=100, c="k", orientation="horizontal")
         axx.set_ylim(None, lim)
         axy.set_xlim(None, lim)
         axx.set_facecolor("gray")
