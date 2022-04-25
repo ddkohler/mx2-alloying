@@ -5,8 +5,15 @@ import matplotlib.pyplot as plt
 
 here = pathlib.Path(__file__).resolve().parent
 data_dir = here.parent / "data"
-p = "ZYZ543.wt5"
+p = "data.wt5"
 root = wt.open(data_dir / p)
+# root.print_tree(2)
+
+grid_kwargs = {
+    "ls": ":",
+    "lw": 0.5,
+    "c": "k"
+}
 
 eV_label = r"$\hbar\omega \ (\mathsf{eV})$"
 x_label = r"$x \ (\mathsf{\mu m})$"
@@ -16,18 +23,12 @@ y_label = r"$y \ (\mathsf{\mu m})$"
 def run(save):
     import matplotlib.patches as patches
 
-    d = root.PL.proc_PL
-    d.level("intensity", 2, 2)
-    d.smooth((5, 0, 0))
-    x0 = 12  # x-slice to examine further (um)
-    screen = root.raman.proc_raman.chop("x", "y", at={"energy":[350, "wn"]})[0]
-    screen.intensity.normalize()
+    d = root.pl.proc
 
-    # d_om = root.PL.om
-    # d_om.print_tree()
-    
-    # img = np.stack([d_om.r, d_om.g, d_om.b], axis=-1)
-    # extent = [d_om.x.min(), d_om.x.max(), d_om.y.min(), d_om.y.max()]
+    # d.smooth((5, 0, 0))
+    x0 = -12  # x-slice to examine further (um)
+    screen = root.raman.proc.chop("x", "y", at={"energy":[350, "wn"]})[0]
+    screen.intensity.normalize()
 
     fig, gs = wt.artists.create_figure(
         width="double", nrows=2,
@@ -41,19 +42,21 @@ def run(save):
     # ax0.set_title("Reflection \n (Enh. Contrast)")
 
     ax1 = plt.subplot(gs[1, 0])
+
     # mask
     arr = d.intensity[:]
     arr_collapse = np.mean(arr, axis=0)
 
     mask = np.ones(arr_collapse.shape)
-    mask[arr_collapse < arr_collapse.max() * 0.04] = 0
+    mask[arr_collapse < arr_collapse.max() * 0.05] = 0
     nanmask = mask.copy()
     nanmask[nanmask == 0] = np.nan
 
-    # datasets to plot
+    # # datasets to plot
     pl_area = d.intensity[:].mean(axis=0)
     pl_color = d.intensity_energy_moment_1[0] * nanmask
-    pl_color[pl_color < 1.81] = 1.81
+    pl_color[pl_color < 1.82] = 1.82
+
 
     # if x, y are 1D, use z.T; if x, y are 2D, use z
     if False:  # for testing alignment of reflection, PL images
@@ -66,13 +69,12 @@ def run(save):
     pcolormesh = ax1.pcolormesh(d.axes[0].points, d.axes[1].points, pl_color.T, cmap="rainbow_r")
     ax1.contour(
         screen, channel="intensity",
-        # d.axes[0].points, d.axes[1].points-2, d.screen[0].T,
-        levels=np.array([0, 0.5, 1]), colors="w", linewidths=2, alpha=1
+        levels=np.array([-1, 0.5, 2]), colors="w", linewidths=2, alpha=1
     )
     ax1.text(-10, 10, r"$\mathsf{WS}_2$", color="w", fontsize=16)
     ax1.text(-3, 30, r"$\mathsf{MoS}_2$", color="w", fontsize=16)
     rect1 = patches.Rectangle(
-        (x0 - 1, -29), 2, 70, linewidth=1, edgecolor='k', facecolor='k', fill=False
+        (x0 - 1, d.y.min()-1), 2, d.y.max() - d.y.min() + 2, linewidth=1, edgecolor='k', facecolor='k', fill=False
     )
     ax1.add_patch(rect1)
 
@@ -80,7 +82,7 @@ def run(save):
     ax1.set_xlim(-50, 50)
 
     # plt.yticks(visible=False)
-    ax_intensity = ax1.inset_axes([0.7, 0.7, 0.3, 0.3])  # plt.subplot(gs[0,3], sharex=ax0, sharey=ax0)
+    ax_intensity = ax1.inset_axes([0.7, 0.7, 0.3, 0.3])
     ax_intensity.pcolormesh(d.axes[0].points, d.axes[1].points, pl_area.T, cmap="gist_gray")
 
     ax1cb = plt.subplot(gs[0, 0])
@@ -101,9 +103,10 @@ def run(save):
 
     ax2 = plt.subplot(gs[1, 1])
     ax2.pcolormesh(crossover)
-    ax2.text(0.4, 0.85, r"$x=12 \ \mathsf{\mu m}$", transform=ax2.transAxes, fontsize=16)
+    ax2.text(0.35, 0.87, r"$x=" + str(x0) + r"\ \mathsf{\mu m}$", transform=ax2.transAxes, fontsize=16)
+    ys = [-20, -8]
     rect2 = patches.Rectangle(
-        (1.66, -21), 0.4, 10, linewidth=1,edgecolor='k',facecolor='k', fill=False
+        (1.66, ys[0] - 1), 0.4, ys[1] - ys[0], linewidth=1, edgecolor='k',facecolor='k', fill=False
     )
     ax2.add_patch(rect2)
     # plt.ylim(-30, 40)
@@ -117,9 +120,9 @@ def run(save):
         label="PL intensity (a.u.)"
     )
 
-    ax3 = plt.subplot(gs[1, 2])
+    ax3 = plt.subplot(gs[:, 2])
     crossover.intensity[:] /= np.nanmax(crossover.intensity[:], axis=0)
-    spectra = crossover.split("y", [-20, -10], units="um")[1]
+    spectra = crossover.split("y", [-20, -8], units="um")[1]
     spectra = spectra.chop("energy")
     centers = np.array([spec.intensity_energy_moment_1[0] for spec in spectra.values()])
     centers -= np.nanmin(pl_color)
@@ -140,21 +143,34 @@ def run(save):
             text = r"$" + text
         ax3.text(1.65, i + 0.1, text, fontsize=16)
 
+    # add in control spectrum
+    control = wt.open(data_dir / "zyz-554.wt5").pl.face
+    control = control.chop("wm", at={"x":[0, "um"]})[0]
+    control.convert("eV")
+    control.signal.normalize()
+    ax3.plot(control.wm[:], control.signal[:] + len(spectra), "k", lw=2)
+    ax3.text(1.8, len(spectra) + 0.4, r"$\mathsf{pure \ WS}_2$", fontsize=16)
+    ax3.set_xlim(1.65, 2.06)
+
+
     for c_ax in [ax1cb, ax2cb]:
         c_ax.xaxis.set_label_position('top')
         c_ax.xaxis.set_ticks_position('top')
 
     ax1.set_xticks(np.linspace(-25, 25, 3))
     ax1.set_yticks(np.linspace(-25, 25, 3))
+    ax1.set_ylim(d.y.min(), d.y.max())
     ax_intensity.set_xticklabels([None for i in ax_intensity.get_xticklabels()])
     ax_intensity.set_yticklabels([None for i in ax_intensity.get_yticklabels()])
+    ax2.set_yticks([i for i in ax1.get_yticks()])
     ax2.set_yticklabels([None for i in ax2.get_yticklabels()])
-    ax3.set_yticks([i for i in range(len(spectra))])
-    ax3.set_yticklabels([None for i in range(len(spectra))])
+    ax2.set_ylim(*ax1.get_ylim())
+    ax3.set_yticks([i for i in range(len(spectra) + 1)])
+    ax3.set_yticklabels([None for i in ax3.get_yticks()])
     ax3.yaxis.tick_right()
     ax3.yaxis.set_label_position("right")
     for ax in [ax1, ax2, ax3]:
-        ax.grid()
+        ax.grid(**grid_kwargs)
 
     wt.artists.set_ax_labels(ax1, ylabel=y_label, xlabel=x_label)
     wt.artists.set_ax_labels(ax2, xlabel=eV_label)
