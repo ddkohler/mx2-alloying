@@ -6,12 +6,19 @@ from matplotlib.colors import ListedColormap
 import matplotlib.patches as mpatches
 from matplotlib import cm
 
-ref_cmap = cm.get_cmap("turbo_r")
-colors = [ref_cmap(i/5) for i in range(5)]
+
+if True:  # pretty colors
+    ref_cmap = cm.get_cmap("turbo_r")
+    colors = [ref_cmap(i/5) for i in range(5)]
+else:  # darker colors
+    prop_cycle = plt.rcParams['axes.prop_cycle']
+    colors = prop_cycle.by_key()['color']
+    colors = [colors[3], colors[1], colors[2], colors[0], colors[4]]
 
 here = pathlib.Path(__file__).resolve().parent
 root = wt.open(here.parent / "data" / "data.wt5")
 screen = wt.open(here.parent / "fitting" / "screen.wt5")
+logscale = False  # plot spectrum on logscale?
 
 plt.style.use(here / "figures.mplstyle")
 
@@ -56,6 +63,7 @@ def main(save):
     """display the grouping analysis (pub quality figure)
     """
     # alternative framing
+    legend_kwargs={}
     if False:
         fig, gs = wt.artists.create_figure(
             width="double", cols=[1, 1, 1, 1], wspace=1
@@ -66,12 +74,25 @@ def main(save):
         divider = make_axes_locatable(ax0)
         ax1 = divider.append_axes("bottom", 3, pad=1, sharex=ax0)
         ax2 = plt.subplot(gs[2])
-    else:
+    elif False:
         fig, gs = wt.artists.create_figure(
             margin=[1.0, 0.2, 1.0, 0.3],
-            width="double", cols=[1, 1, 1, 1], wspace=1, hspace=0.75
+            width="double", cols=[1, 1, 1, 1],
+            wspace=0.8, hspace=0.75
         )
         ax_map, ax0, ax1, ax2 = [plt.subplot(gs[i]) for i in range(4)]
+        legend_kwargs = {"loc": 'upper center', "bbox_to_anchor": (0.5, 0.98), "ncol": 5}
+    else:
+        fig, gs = wt.artists.create_figure(
+            margin=[0.5, 0.3, 1.0, 0.3],
+            width="double", cols=[1, 1, 1], nrows=2,
+            wspace=0.8, hspace=0.85
+        )
+        ax_map = plt.subplot(gs[0,0])
+        ax0 = plt.subplot(gs[0,1])
+        ax1 = plt.subplot(gs[0,2])
+        ax2 = plt.subplot(gs[1,1:])
+        legend_kwargs = {"loc": "center left", "bbox_to_anchor": (0.06, 0.4), "ncol": 1}
 
     # ws2 ref spectrum
     ws2 = wt.open(here.parent / "data" / "zyz-554.wt5").raman.corner
@@ -134,14 +155,12 @@ def main(save):
         raman.create_variable(name=name, values=zone[None, :, :])
         split = raman.split(name, [0.5], verbose=False)[1]
         y = np.nanmean(split.leveled[:], axis=(1,2))
-        ax2.plot(split.energy.points, y, color=color, lw=2, alpha=0.8)
+        ax2.plot(split.energy.points, y, color=color, lw=3, alpha=1)
         mean_spectra.append(y)
 
     legend = fig.legend(
         handles=patches,
-        loc='upper center',
-        bbox_to_anchor=(0.5, 0.94),
-        ncol=5
+        **legend_kwargs
     )
 
     ax2.annotate(
@@ -159,16 +178,20 @@ def main(save):
     for ax in [ax0, ax1]:
         ax.set_ylim(-0.1, 1.1)
         ax.set_xlim(-0.1, 1.1)
-        ax.set_xticks(np.linspace(0,1,3))
-        ax.set_yticks(np.linspace(0,1,3))
+        ax.set_xticks(np.linspace(0,1,2))
+        ax.set_yticks(np.linspace(0,1,2))
 
     ax_map.set_xticks([])
     ax_map.set_yticks([])
-    # ax_map.set_xticklabels([None for _ in ax_map.get_xticklabels()])
-    # ax_map.set_yticklabels([None for _ in ax_map.get_yticklabels()])
 
-    ax2.set_xlim(250, 450)
-    ax2.set_ylim(-0.1, 2.1)
+    ax2.set_xlim(150, 450)
+    if logscale:
+        ax2.set_ylim(0.03, 2.1)
+        ax2.set_yscale("log")
+    else:
+        ax2.set_ylim(-0.1, 2.1)
+        ax2.set_yticks(np.linspace(0,2,3))
+
 
     ax0.set_xlabel(r"$\mathsf{MoS_2 \ A_1^\prime \ intensity \ (norm.)}$")  # , fontsize=12)
     ax0.set_ylabel(r"$\mathsf{MoS_2 \ E^{\prime} \ intensity \ (norm.)}$")  # , fontsize=12)
@@ -186,7 +209,6 @@ def main(save):
         wt.artists.savefig(p)
     else:
         plt.show()
-
 
 
 if __name__ == "__main__":

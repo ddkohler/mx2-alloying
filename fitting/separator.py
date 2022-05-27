@@ -50,7 +50,7 @@ def main(save=True):
     mos2 = np.logical_not(substrate) \
         & (screen["MoS2_E2g"][:] < 0.45) \
         & (screen["MoS2_A1g"][:] < 0.55) \
-        & (screen["WS2_A1g"][:] < 0.17)
+        & (screen["WS2_A1g"][:] < 0.12)  # 0.17
     # mos2 = np.logical_not(substrate) & \
     #     (screen["MoS2_E2g"][:] < 0.25) & (screen["MoS2_A1g"][:] < 0.41) \
     #     & (screen["WS2_A1g"][:] < 0.18)
