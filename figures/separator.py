@@ -55,7 +55,7 @@ plt.style.use(here / "figures.mplstyle")
 
 
 def plot_screen(ax, arr, color):
-    cmap = ListedColormap([[0,0,0,0], color])
+    cmap = ListedColormap([[1,1,1,0], color])
     ax.pcolormesh(screen.x.points, screen.y.points, arr.T, cmap=cmap)
 
 
@@ -138,6 +138,7 @@ def main(save):
     ):
         # map
         plot_screen(ax_map, screen[name][:], color)
+        ax_map.set_facecolor([1] * 3)
 
         # scatter
         for ax, xchan, ychan in [[ax0, "MoS2_A1g", "MoS2_E2g"], [ax1, "WS2_A1g", "WS2_2LA"]]:
@@ -183,6 +184,18 @@ def main(save):
 
     ax_map.set_xticks([])
     ax_map.set_yticks([])
+    from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
+    scalebar = AnchoredSizeBar(
+        ax_map.transData,
+        50, r'50 $\mathsf{\mu}$m',
+        'lower left', 
+        pad=0.3,
+        color='black',
+        frameon=False,
+        size_vertical=1,
+        fill_bar=True
+    )
+    ax_map.add_artist(scalebar)
 
     ax2.set_xlim(150, 450)
     if logscale:

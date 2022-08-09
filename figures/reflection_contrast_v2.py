@@ -1,7 +1,9 @@
 import WrightTools as wt
 import pathlib
 import matplotlib.pyplot as plt
+import matplotlib
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib.patheffects as pe
 import figlib as fl
 import tmm_lib as lib
 import numpy as np
@@ -51,22 +53,48 @@ def main(save):
 
     # --- plot ------------------------------------------------------------------------------------
 
-    fig, gs = wt.artists.create_figure(width="double", cols=[1] * 3, wspace=1, hspace=0.75, nrows=2)
-    axs = [plt.subplot(gs[0]), plt.subplot(gs[0, 1:])]
-    
+    fig, gs = wt.artists.create_figure(
+        width="double", cols=[1] * 3, wspace=1, hspace=0.15, nrows=4,
+        aspects=[
+            [[0,0], 0.1],
+            [[2,0], 0.15]
+        ],
+    )
+    axs = [plt.subplot(gs[1,0]), plt.subplot(gs[1, 1:])]
+    cax= plt.subplot(gs[0,1:])
+    wt.artists.plot_colorbar(
+        cax,
+        ticks=np.linspace(-1,1,11),
+        cmap="signed",
+        orientation="horizontal",
+        ticklocation="top",
+        label=r"$\Delta R / R \ (\mathsf{norm})$"
+    )
 
     divider = make_axes_locatable(axs[1])
     axCorr = divider.append_axes("right", 3.8, pad=0.2, sharey=axs[1])
     axs.append(axCorr)
-    axs += [plt.subplot(gs[i]) for i in [3,4,5]]
+    axs += [plt.subplot(gs[3, i]) for i in [0,1,2]]
 
-    axs[0].pcolormesh(x20_image, cmap="gist_gray")
+    axs[0].pcolormesh(x20_image, cmap="gist_gray", vmin=1e5)
     axs[1].pcolormesh(x20rc, channel="contrast")
     axs[2].pcolormesh(x100rc, channel="contrast")
 
     axs[0].vlines([0], -10, 10, colors=["purple"], lw=2)
     axs[1].vlines([1e7/532 / 8065.5], -10, 10, colors=["green"], lw=2)
     axs[2].vlines([1e7/532 / 8065.5], -10, 10, colors=["green"], lw=2)
+
+    from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
+    scalebar = AnchoredSizeBar(
+        axs[0].transData,
+        50, r'50 $\mathsf{\mu}$m', 'lower left', 
+        pad=0.3,
+        color='black',
+        frameon=False,
+        size_vertical=2,
+        fill_bar=True
+    )
+    axs[0].add_artist(scalebar)
 
     for ax in axs[1:3]:
         ax.set_ylim(-10, 10)
@@ -79,10 +107,19 @@ def main(save):
     plt.setp(axs[0].get_yticklabels(), visible=False)
     plt.setp(axs[4].get_yticklabels(), visible=False)
 
-    [wt.artists.corner_text("abcdef"[i], ax=ax, distance=0.1) for i, ax in enumerate(axs)]
-
-    wt.artists.corner_text("20x", ax=axs[1], corner="LR", distance=0.1, bbox=False)
-    wt.artists.corner_text("100x", ax=axs[2], corner="LR", distance=0.1, bbox=False)
+    # subplot labels, annotation
+    [wt.artists.corner_text("abcdef"[i], ax=ax, distance=0.1) for i, ax in enumerate(axs[:-1])]
+    axs[-1].text(-0.75, 0.95, "f", transform=axs[-1].transAxes, fontsize=18,
+        bbox=dict(boxstyle="square", facecolor="white", edgecolor=matplotlib.rcParams["legend.edgecolor"])
+    )
+    axs[1].text(
+        0.5, 0.95, "NA 0.46", va="top", ha="center", transform=axs[1].transAxes, fontsize=18, 
+        path_effects=[pe.withStroke(linewidth=3, foreground="w")],
+    )
+    axs[2].text(
+        0.5, 0.95, "NA 0.96", va="top", ha="center", transform=axs[2].transAxes, fontsize=18, 
+        path_effects=[pe.withStroke(linewidth=3, foreground="w")],
+    )
 
     # axs[0].indicate_inset_zoom(axs[1])
     axs[0].set_xlim(None, 50)
@@ -94,7 +131,6 @@ def main(save):
     x100rc = x100rc.split("y", [-10, 10])[1]
     axs[2].plot(x100rc.ares.points, x100rc.y.points, color="k", ls="-", alpha=0.3)
     axs[2].plot(x100rc.bres.points, x100rc.y.points, color="k", ls="-", alpha=0.3)
-
 
     # rc slices and comparison with Fresnel predictions
     # wt.artists.corner_text(r"MoS$_2$", ax=axs[3], background_alpha=1, bbox=True, corner="LR")
@@ -160,9 +196,8 @@ def main(save):
     l1 = axs[3].legend(title=r"MoS$_2$", loc="lower right", fontsize=12)
     l2 = axs[4].legend(title=r"WS$_2$", loc="lower right", fontsize=12)
 
-    axs[5].set_aspect(aspect="equal")
-    axs[5].scatter(x100rc.ares.points, x100rc.bres.points, alpha=0.1, color="k")
-    axs[5].scatter([1.963], [2.401], color="goldenrod")  # control resonance positions
+    axs[5].scatter(x100rc.ares.points, x100rc.bres.points, alpha=0.1, color="k", linewidths=0)
+    axs[5].scatter([1.963], [2.401], color="goldenrod", s=200, marker="D", alpha=0.7, edgecolors="k", linewidths=0)  # control resonance positions
     axs[5].grid(**grid_kwargs)
     wt.artists.set_ax_labels(
         ax=axs[5],
@@ -170,7 +205,9 @@ def main(save):
         ylabel=r"$\hbar\omega_B \ \left( \mathsf{eV} \right)$",        
     )
     axs[5].set_xticklabels([f"{_:0.2f}" for _ in axs[5].get_xticks()], rotation=-45)
-
+    axs[5].set_xlim(1.8, 2.0)
+    axs[5].set_ylim(2.0, 2.45)
+    axs[5].set_aspect("equal")
  
     wt.artists.set_ax_labels(
         axs[1],
@@ -193,7 +230,6 @@ def main(save):
         wt.artists.savefig(here / "reflection_contrast_v2.png")
     else:
         plt.show()
-
 
 if __name__ == "__main__":
     from sys import argv

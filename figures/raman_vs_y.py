@@ -104,6 +104,7 @@ def run(save):
     )
     cax.xaxis.set_label_position('top')
     cax.xaxis.set_ticks_position('top')
+    cax.set_facecolor([1,1,1,0])
     
     ax2 = plt.subplot(gs[1:,:])
     # lower_junction = d0.split("y", [-28, -12])[1]

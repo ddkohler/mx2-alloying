@@ -162,18 +162,12 @@ def main(save):
     # ax2_inset.set_yticklabels([None for _ in ax2_inset.get_yticklabels()])
 
     for ax in [ax2, ax2_inset, ax1, ax0]:
-        ax.set_facecolor([0.8] * 3)
+        ax.set_facecolor([0.95] * 3)
         ax.grid(c="k", ls=":")
 
     wt.artists.corner_text("f")
     ax2.set_xlabel(r"$\mathsf{Raman \ shift} \ \left( \mathsf{cm}^{-1} \right)$")
     ax2.set_ylabel("average signal (a.u.)")
-
-
-    # mos2.splitting.clip(20.5, 25.5)
-    # mos2.we.clip(382.7, 384.7)
-    # mos2.wa.clip(405, 409)
-
 
     for col, channel, ticks, label, vlim in zip(
         [0, 1, 2],
@@ -194,13 +188,13 @@ def main(save):
         #     np.nanmax(mos2.channels[wt.kit.get_index(mos2.channel_names, channel)].points)
         # ]
         axi = plt.subplot(gs[1, col])
+        axi.set_yticks([-20, 0, 20, 40])
         if col > 0:
             plt.yticks(visible=False)
 
-        cmap = plt.cm.viridis.copy() if col !=0 else plt.cm.viridis_r.copy()
-        under, over = cmap(0.), cmap(1.)
-        cmap.set_under(under)
-        cmap.set_over(over)
+        cmap = plt.cm.viridis if col !=0 else plt.cm.viridis_r
+        cmap = cmap.with_extremes(over=cmap(1.), under=cmap(0.), bad=[0.9] * 3)
+
         axi.pcolormesh(
             mos2,
             channel=channel,
