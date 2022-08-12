@@ -22,37 +22,6 @@ logscale = False  # plot spectrum on logscale?
 
 plt.style.use(here / "figures.mplstyle")
 
-# ws2.print_tree()
-# out = wt.artists.interact2D(ws2.raman.face)
-# plt.show()
-
-
-# an exploration:
-# does PL emission frequency correlate with 2LA brightness?
-# if False:
-#     fig, gs = wt.artists.create_figure(cols=[1,1])
-
-#     ax0 = plt.subplot(gs[0])
-#     ax0.pcolormesh(root.pl.proc, channel="intensity_energy_moment_1")
-
-#     ax1 = plt.subplot(gs[1])
-#     ax1.pcolormesh(screen, channel="WS2_2LA")
-
-# if False:
-#     fig, gs = wt.artists.create_figure()
-
-#     ax0 = plt.subplot(gs[0])
-#     for filt in [np.logical_not(screen.ws2[:]), np.logical_not(screen.junctionb[:])]:
-#         ws2_2la = screen.WS2_2LA[:].copy()
-#         ws2_2la[filt] *= np.nan
-
-#         ax0.scatter(
-#             root.pl.proc.intensity_energy_moment_1[:].flatten(),
-#             ws2_2la.flatten(),
-#             alpha=0.2
-#         )
-#     plt.show()
-
 
 def plot_screen(ax, arr, color):
     cmap = ListedColormap([[1,1,1,0], color])
@@ -64,35 +33,16 @@ def main(save):
     """
     # alternative framing
     legend_kwargs={}
-    if False:
-        fig, gs = wt.artists.create_figure(
-            width="double", cols=[1, 1, 1, 1], wspace=1
-        )
-        ax_map = plt.subplot(gs[0:1], aspect=1)
-        ax0 = plt.subplot(gs[1])
-        from mpl_toolkits.axes_grid1 import make_axes_locatable
-        divider = make_axes_locatable(ax0)
-        ax1 = divider.append_axes("bottom", 3, pad=1, sharex=ax0)
-        ax2 = plt.subplot(gs[2])
-    elif False:
-        fig, gs = wt.artists.create_figure(
-            margin=[1.0, 0.2, 1.0, 0.3],
-            width="double", cols=[1, 1, 1, 1],
-            wspace=0.8, hspace=0.75
-        )
-        ax_map, ax0, ax1, ax2 = [plt.subplot(gs[i]) for i in range(4)]
-        legend_kwargs = {"loc": 'upper center', "bbox_to_anchor": (0.5, 0.98), "ncol": 5}
-    else:
-        fig, gs = wt.artists.create_figure(
-            margin=[0.5, 0.3, 1.0, 0.3],
-            width="double", cols=[1, 1, 1], nrows=2,
-            wspace=0.8, hspace=0.85
-        )
-        ax_map = plt.subplot(gs[0,0])
-        ax0 = plt.subplot(gs[0,1])
-        ax1 = plt.subplot(gs[0,2])
-        ax2 = plt.subplot(gs[1,1:])
-        legend_kwargs = {"loc": "center left", "bbox_to_anchor": (0.06, 0.4), "ncol": 1}
+    fig, gs = wt.artists.create_figure(
+        margin=[0.5, 0.3, 1.0, 0.3],
+        width="double", cols=[1, 1, 1], nrows=2,
+        wspace=0.8, hspace=0.85
+    )
+    ax_map = plt.subplot(gs[0,0])
+    ax0 = plt.subplot(gs[0,1])
+    ax1 = plt.subplot(gs[0,2])
+    ax2 = plt.subplot(gs[1,1:])
+    legend_kwargs = {"loc": "center left", "bbox_to_anchor": (0.06, 0.4), "ncol": 1}
 
     # ws2 ref spectrum
     ws2 = wt.open(here.parent / "data" / "zyz-554.wt5").raman.corner
@@ -105,8 +55,6 @@ def main(save):
     if True:  # remove baseline 
         ws2.level(0, 0, 5)
     ws2.signal[:] /= si_peak_sig
-    # subtract Si Raman
-    # ws2.level(0, 1, 3)
     ws2 = ws2.split("x", [-10, 10])[1]
     ws2.moment(1, 0, moment=0)
     ws2.channels[-1][:] /= ws2.shape[1]
@@ -152,7 +100,6 @@ def main(save):
         zone = screen[name][:]
         cmap = ListedColormap([[0,0,0,0], color])
         patches.append(mpatches.Patch(color=color, label=label))
-        # ax0.pcolormesh(screen.x.points, screen.y.points, zone.T, cmap=cmap)
         raman.create_variable(name=name, values=zone[None, :, :])
         split = raman.split(name, [0.5], verbose=False)[1]
         y = np.nanmean(split.leveled[:], axis=(1,2))
@@ -205,13 +152,12 @@ def main(save):
         ax2.set_ylim(-0.1, 2.1)
         ax2.set_yticks(np.linspace(0,2,3))
 
-
-    ax0.set_xlabel(r"$\mathsf{MoS_2 \ A_1^\prime \ intensity \ (norm.)}$")  # , fontsize=12)
-    ax0.set_ylabel(r"$\mathsf{MoS_2 \ E^{\prime} \ intensity \ (norm.)}$")  # , fontsize=12)
-    ax1.set_xlabel(r"$\mathsf{WS_2 \ A_1^\prime \ intensity \ (norm.)}$")  # , fontsize=12)
-    ax1.set_ylabel(r"$\mathsf{WS_2 \ 2LA \ intensity \ (norm.)}$")  # , fontsize=12)
-    ax2.set_xlabel(r"$\mathsf{Raman \ shift} \ \left(\mathsf{cm}^{-1}\right) $")  # , fontsize=12)
-    ax2.set_ylabel(r"$\mathsf{Intensity \ (a.u.)}$")  # , fontsize=12)
+    ax0.set_xlabel(r"$\mathsf{MoS_2 \ A_1^\prime \ intensity \ (norm.)}$")
+    ax0.set_ylabel(r"$\mathsf{MoS_2 \ E^{\prime} \ intensity \ (norm.)}$")
+    ax1.set_xlabel(r"$\mathsf{WS_2 \ A_1^\prime \ intensity \ (norm.)}$")
+    ax1.set_ylabel(r"$\mathsf{WS_2 \ 2LA \ intensity \ (norm.)}$")
+    ax2.set_xlabel(r"$\mathsf{Raman \ shift} \ \left(\mathsf{cm}^{-1}\right) $")
+    ax2.set_ylabel(r"$\mathsf{Intensity \ (a.u.)}$")
 
     for i, ax in enumerate(fig.axes):
         wt.artists.corner_text("abcd"[i], ax=ax)

@@ -31,7 +31,6 @@ def run(save):
         d0.smooth((2, 0))
         d0 = d0.split("energy", [440], units="wn")[0]
         d0.intensity.normalize()
-        # d0.intensity.log10(-2)
         channel="intensity"
     else:  # non-vertical slice (antidiagonal)
         d.smooth((2, 0, 0))
@@ -45,12 +44,6 @@ def run(save):
         d0.transform("energy", "y")
         channel="sum"
 
-    # fig, gs = wt.artists.create_figure(
-    #     width=6.66, nrows=3, margin=[0.8, 0.15, 0.8, 0.8],
-    #     cols=[1, 1.25],
-    #     aspects=[ [[0,0], 0.1], [[1,0], 1]], 
-    #     hspace=0.1, wspace=0.1
-    # )
     fig, gs = wt.artists.create_figure(
         width=6.66, nrows=3, margin=[0.8, 0.15, 0.8, 0.8],
         cols=[1, 1.25],
@@ -65,7 +58,6 @@ def run(save):
     ax0.set_xlim(x0-30, x0+30)
     ax0.set_xticks([-20, 0, 20])
     ax0.set_yticks([-20, 0, 20])
-
 
     ax1 = plt.subplot(gs[0, 1])
     plt.yticks(visible=False)
@@ -107,9 +99,6 @@ def run(save):
     cax.set_facecolor([1,1,1,0])
     
     ax2 = plt.subplot(gs[1:,:])
-    # lower_junction = d0.split("y", [-28, -12])[1]
-    # lower_junction = d0.split("y", [12, 24])[1]
-    # lower_junction.leveled.normalize()
 
     yis = [11, 17, 19, 25]  # [21, 19, 17, 15]
     offset = 0

@@ -133,12 +133,7 @@ def main(save):
     axs[2].plot(x100rc.bres.points, x100rc.y.points, color="k", ls="-", alpha=0.3)
 
     # rc slices and comparison with Fresnel predictions
-    # wt.artists.corner_text(r"MoS$_2$", ax=axs[3], background_alpha=1, bbox=True, corner="LR")
-    # wt.artists.corner_text(r"WS$_2$", ax=axs[4], background_alpha=1, bbox=True, corner="LR")
-
-    # y_ws2 = root.reflection.x20.split("ydist", [15, 20])[1].contrast[:].mean(axis=1)
     y_ws2 = x20rc.split("ydist", [1.5, 2.5])[1].contrast[:].mean(axis=1)
-    # y_mos2 = dx20.split("ydist", [31, 35])[1].contrast[:].mean(axis=1)
     y_mos2 = root.reflection.x20.split("ydist", [-41, -39])[1].contrast[:].mean(axis=1)
     x = root.reflection.x20.energy.points[:]
     axs[3].plot(x, y_mos2, lw=3, alpha=0.8, label="HS shell")
@@ -147,42 +142,20 @@ def main(save):
     # show ws2 control
     control = wt.open(here.parent / "data" / "zyz-554.wt5").reflection.refl
     control.transform("wm", "y")
-    # out = wt.artists.interact2D(control, channel="subtr")
-    # plt.show()
-    # 1/0
     control = control.chop("wm", at={"y": [2, "um"]})[0]
     control.convert("eV")
     control.smooth(5)
     axs[4].plot(
         control, channel="subtr",
         lw=3, alpha=0.8, label="control", color="goldenrod")
-    if False:
-        control2 = wt.open(here.parent / "data" / "ws2 monolayers" / "na-assisted growth" / "root.wt5").spectrum
-        control2 = control2.chop("wm", at={"y": [50, None]})[0]
-        control2.convert("eV")
-        control2.create_channel("rc_spot2", values=control2.spot2[:] / control2.signal[:] - 1, signed=True)
-        control2.smooth(2)
-        axs[4].plot(control2, channel="rc_spot2")
 
     # mos2 lineshape simulation
-    # blank = lib.FilmStack([fl.n_air, fl.n_fused_silica, fl.n_Si], [fl.d_SiO2])
-    # sample = lib.FilmStack([fl.n_air, nmos2, fl.n_fused_silica, fl.n_Si], [fl.d_mono, fl.d_SiO2])
-    # r_blank = blank.RT(hw)[0]
-    # r_sample = sample.RT(hw)[0]
-    # contrast = (r_sample - r_blank) / r_blank
-    # axs[4].plot(x, y_mos2, label=r"MoS$_2$", color="k", alpha=0.8)
     axs[3].plot(
         hw, sim_contrast(nmos2, fl.d_mono, hw),
         linewidth=2, linestyle=":", alpha=0.8, color="k", label=r"theory"
     )
 
     # ws2 lineshape simulation
-    blank = lib.FilmStack([fl.n_air, fl.n_fused_silica, fl.n_Si], [fl.d_SiO2])
-    sample = lib.FilmStack([fl.n_air, nws2, fl.n_fused_silica, fl.n_Si], [fl.d_mono, fl.d_SiO2])
-    r_blank = blank.RT(hw)[0]
-    r_sample = sample.RT(hw)[0]
-    contrast = (r_sample - r_blank) / r_blank
-    # axs[4].plot(x, y_mos2, label=r"MoS$_2$", color="k", alpha=0.8)
     axs[4].plot(
         hw, sim_contrast(nws2, fl.d_mono, hw),
         linewidth=2, linestyle=":", alpha=0.8, color="k", label=r"theory"
