@@ -9,7 +9,7 @@ here = pathlib.Path(__file__).resolve().parent
 data_dir = here.parent / "data"
 p = "data.wt5"
 root = wt.open(data_dir / p)
-mpl.style.use("figures.mplstyle")
+mpl.style.use(here / "figures.mplstyle")
 # root.print_tree(2)
 
 cmap = mpl.cm.get_cmap("magma").copy()

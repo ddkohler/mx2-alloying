@@ -6,34 +6,32 @@ import tmm_lib as lib
 import figlib as fl
 
 
-here = pathlib.Path(__file__).resolve().parent
-data = here.parent / "data" / "reflection_microspectroscopy" / "reflection.wt5"
-root = wt.open(data)
-
-d = root["spectrum"]
-hw = np.linspace(1.6, 2.7, 201)  # eV
-
-d_mono = fl.d_mono
-n_fused_silica = fl.n_fused_silica
-n_air = fl.n_air
-n_Si = fl.n_Si
-
-wt.artists.apply_rcparams(kind="publication")
-
-
-# -------------------------------------------------------------------------------------------------
-
-
 def run(save):
+    here = pathlib.Path(__file__).resolve().parent
+    data = here.parent / "data" / "data.wt5"
+    root = wt.open(data)
+
+    # plt.style.use(here / "figures.mplstyle")
+
+    d = root.reflection.x20
+    hw = np.linspace(1.6, 2.7, 201)  # eV
+
+    d_mono = fl.d_mono
+    n_fused_silica = fl.n_fused_silica
+    n_air = fl.n_air
+    n_Si = fl.n_Si
+
+
     # d2 = 75e-7
-    fig, gs = wt.artists.create_figure(width="dissertation", cols=[1, 1])
+    fig, gs = wt.artists.create_figure(width="dissertation", cols=[1, 1], default_aspect=0.8)
     ax0 = plt.subplot(gs[0])
     ax1 = plt.subplot(gs[1])
     # plt.title(f"Reflection Contrast vs. SIO2 Thickness ")
     for i, d2i in enumerate(np.linspace(240, 340, 6)):
-        # nmos2 = n_semi_1D(E0s_mos2, Gs_mos2, As_mos2, 0, offset_mos2)
+
         def nmos2(hw):
             return fl.n_mos2_ml(hw + 0.04)
+
         label = str(d2i)
         if i==0:
             label += " nm"
@@ -45,14 +43,13 @@ def run(save):
         ax1.plot(hw, contrast, linewidth=3, alpha=0.5, label=label)
         ax0.plot(hw, r_blank, linewidth=3, alpha=0.5, label=label)
 
-    for y in [-15]:
-        speci = d.chop("wm", at={"y":[y, "um"]})[0]
-        # speci.print_tree()
+    d.transform("energy", "ydist")
+    for y in [-39]:
+        speci = d.at(ydist=[y, None])
         ax1.plot(
-            speci.wm[:], speci.contrast[:],
+            speci, channel="contrast",
             color="k", label="experiment \n" + r"($x=0 \ \mu \mathsf{m}, y=-16 \ \mu \mathsf{m}$)"
         )
-    l = ax0.legend(fontsize=12, framealpha=0.7, bbox_to_anchor=(1.1, 1.2, 1.5, ), ncol=3)
     wt.artists.corner_text("a", ax=ax0)
     wt.artists.corner_text("b", ax=ax1)
     wt.artists.set_ax_labels(
@@ -67,8 +64,16 @@ def run(save):
         xlabel=r"$\hbar \omega \ \left(\mathsf{eV} \right)$",
         ylabel=r"$R_0$"
     )
-    ax0.grid()
-    ax1.grid()
+
+    for ax in [ax0, ax1]:
+        ax.set_xlim(1.6, 2.7)
+        ax.grid()
+
+    l = ax0.legend(ncol=3,
+        loc="lower center", bbox_to_anchor=(0.5, 0.85),
+        bbox_transform=fig.transFigure,
+    )
+
     if save:
         wt.artists.savefig(here / "reflection_constrast_vs_SiO2_thickness.png")
     else:

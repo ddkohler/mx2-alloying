@@ -29,7 +29,7 @@ def sim_contrast(n_tmdc, d_tmdc, hw):
     return contrast
 
 
-def main(save):
+def run(save):
 
     x20_image = root.reflection.x20_image
 
@@ -210,4 +210,4 @@ if __name__ == "__main__":
         save = argv[1] != "0"
     else:
         save = True
-    main(save)
+    run(save)
