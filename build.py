@@ -44,11 +44,7 @@ def build_data():
     print_then_call(python, os.path.join('data', 'workup_heterostructure.py'))
     print_then_call(python, os.path.join('data', 'workup_ws2_control.py'))
     print_then_call(python, os.path.join('data', 'workup_ws2_na_assisted.py'))
-
-
-def build_fits():
-    print_with_line('fits')
-    print_then_call(python, os.path.join('fitting', 'separator.py'))
+    print_then_call(python, os.path.join('data', 'define_clusters.py'))
 
 
 def build_figures():
@@ -64,8 +60,6 @@ if __name__ == '__main__':
         fetch_data()
     if 'data' in sys.argv or 'all' in sys.argv:
         build_data()
-    if 'fits' in sys.argv or 'all' in sys.argv:
-        build_fits()
     if 'figures' in sys.argv or 'all' in sys.argv:
         build_figures()
     print_with_line('building done!')

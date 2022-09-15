@@ -6,9 +6,9 @@ from fitlib import fom
 from scipy.optimize import least_squares
 
 here = pathlib.Path(__file__).resolve().parent
-root = wt.open(here.parent / "data" / "data.wt5")
+root = wt.open(here.parent / "data" / "heterostructure.wt5")
 root.print_tree()
-screen = wt.open(here / "screen.wt5")
+screen = wt.open(here.parent / "data" / "clusters.wt5")
 screen.print_tree()
 
 verbose = False

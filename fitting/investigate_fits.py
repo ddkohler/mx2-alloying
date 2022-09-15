@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from fitlib import two_res, gauss
 
 here = pathlib.Path(__file__).resolve().parent
-root = wt.open(here.parent / "data" / "data.wt5")
+root = wt.open(here.parent / "data" / "heterostructure.wt5")
 
 path = here / "mos2_fitted.wt5"
 
