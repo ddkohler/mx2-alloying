@@ -15,7 +15,7 @@ nws2 = fl.n_ws2
 hw = np.linspace(1.6, 2.7, 201)
 
 here = pathlib.Path(__file__).resolve().parent
-root = wt.open(here.parent / "data" / "data.wt5")
+root = wt.open(here.parent / "data" / "heterostructure.wt5")
 
 ev_label = r"$\hbar\omega \ \left(\mathsf{eV}\right)$"
 
@@ -140,7 +140,7 @@ def run(save):
     axs[4].plot(x, y_ws2 * 1.5, lw=3, alpha=0.8, label="HS edge\n(x1.5)")
 
     # show ws2 control
-    control = wt.open(here.parent / "data" / "zyz-554.wt5").reflection.refl
+    control = wt.open(here.parent / "data" / "ws2_control.wt5").reflection.refl
     control.transform("wm", "y")
     control = control.chop("wm", at={"y": [2, "um"]})[0]
     control.convert("eV")

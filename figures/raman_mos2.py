@@ -7,7 +7,7 @@ import pathlib
 verbose = False
 
 here = pathlib.Path(__file__).resolve().parent
-root = wt.open(here.parent / "data" / "data.wt5")
+root = wt.open(here.parent / "data" / "heterostructure.wt5")
 screen = wt.open(here.parent / "fitting" / "screen.wt5")
 plt.style.use(here / "figures.mplstyle")
 

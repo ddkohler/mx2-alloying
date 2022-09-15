@@ -19,7 +19,7 @@ ref_cmap = cm.get_cmap("turbo_r")
 colors = ref_cmap(np.linspace(0, 1, 4))
 
 here = pathlib.Path(__file__).resolve().parent
-root = wt.open(here.parent / "data" / "data.wt5")
+root = wt.open(here.parent / "data" / "heterostructure.wt5")
 
 def main(save=True):
     raman = root.raman.proc
@@ -177,7 +177,7 @@ def main(save=True):
     ax3.set_ylabel("Intensity (a.u.)")
 
     if save:
-        wt.artists.savefig(here / "separator.v2.png", fig=fig)
+        wt.artists.savefig(here / "separator.png", fig=fig)
         screen.save(here / "screen.wt5", overwrite=True)
     else:
         # interactive mode:  display selected lineshapes by selecting from 2D spatial map pixels

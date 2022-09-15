@@ -8,7 +8,7 @@ import figlib as fl
 
 def run(save):
     here = pathlib.Path(__file__).resolve().parent
-    data = here.parent / "data" / "data.wt5"
+    data = here.parent / "data" / "heterostructure.wt5"
     root = wt.open(data)
 
     # plt.style.use(here / "figures.mplstyle")

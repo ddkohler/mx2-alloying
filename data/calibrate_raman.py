@@ -6,7 +6,7 @@ from scipy.optimize import least_squares
 
 
 here = pathlib.Path(__file__).resolve().parent
-root = wt.open(here / "data.wt5")
+root = wt.open(here / "heterostructure.wt5")
 raman = root.raman.raw.split("energy", [450])[1].split("x", [-20])[0].split("y", [20])[1]
 raman.level(0, 0, 20)
 

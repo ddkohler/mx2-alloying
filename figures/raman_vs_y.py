@@ -7,7 +7,7 @@ import numpy as np
 
 here = pathlib.Path(__file__).resolve().parent
 data_dir = here.parent / "data"
-p = "data.wt5"
+p = "heterostructure.wt5"
 root = wt.open(data_dir / p)
 mpl.style.use(here / "figures.mplstyle")
 # root.print_tree(2)
@@ -105,7 +105,7 @@ def run(save):
     yticks = [0]
 
     if True:  # ws2 ref spectrum
-        ws2 = wt.open(here.parent / "data" / "zyz-554.wt5").raman.corner
+        ws2 = wt.open(here.parent / "data" / "ws2_control.wt5").raman.corner
 
         si_temp = ws2.split("x", [-30])[0].split("wm", [505, 530])[1] # isolate pure substrate
         si_temp.level(0, 0, 5) # remove baseline

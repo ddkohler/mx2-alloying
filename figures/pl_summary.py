@@ -8,7 +8,7 @@ from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 
 here = pathlib.Path(__file__).resolve().parent
 data_dir = here.parent / "data"
-p = "data.wt5"
+p = "heterostructure.wt5"
 root = wt.open(data_dir / p)
 # root.print_tree(2)
 
@@ -42,7 +42,7 @@ def run(save):
         aspects=[[[0,0], 0.1],[[1,0], 1]]
     )
     ax_image = plt.subplot(gs[:,0])
-    img = mplimg.imread(here.parent / "data" / "characterization" / "microscope1 - enhanced contrast.jpg")
+    img = mplimg.imread(here.parent / "data" / "heterostructure" / "characterization" / "microscope1 - enhanced contrast.jpg")
     img = ax_image.imshow(img.transpose(1,0,2))
     # scale bar; 92 um ~ 302 pixels -> 3.28 pixels / um
     scalebar = AnchoredSizeBar(
@@ -163,7 +163,7 @@ def run(save):
         ax3.text(1.65, i + 0.1, text, fontsize=16)
 
     # add in control spectrum
-    control = wt.open(data_dir / "zyz-554.wt5").pl.face
+    control = wt.open(data_dir / "ws2_control.wt5").pl.face
     control = control.chop("wm", at={"x":[0, "um"]})[0]
     control.convert("eV")
     control.signal.normalize()

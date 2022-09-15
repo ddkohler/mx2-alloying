@@ -9,7 +9,7 @@ verbose = False
 
 here = pathlib.Path(__file__).resolve().parent
 data_dir = here.parent / "data"
-p = "data.wt5"
+p = "heterostructure.wt5"
 root = wt.open(data_dir / p)
 root.print_tree()
 d = root.raman.proc

@@ -10,7 +10,7 @@ def run(save):
     """shg polarization summary image"""
     here = pathlib.Path(__file__).resolve().parent
     data_dir = here.parent / "data"
-    p = "data.wt5"
+    p = "heterostructure.wt5"
     root = wt.open(data_dir / p)
     shg_pol = root.shg  # wt.open(data_dir / "polarization.wt5")
     verbose=False
@@ -98,7 +98,7 @@ def run2(save):
     """shg polarization summary image - polished"""
     here = pathlib.Path(__file__).resolve().parent
     data_dir = here.parent / "data"
-    p = "data.wt5"
+    p = "heterostructure.wt5"
     root = wt.open(data_dir / p)
     shg_pol = root.shg
     verbose = False

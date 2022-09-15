@@ -16,7 +16,7 @@ else:  # darker colors
     colors = [colors[3], colors[1], colors[2], colors[0], colors[4]]
 
 here = pathlib.Path(__file__).resolve().parent
-root = wt.open(here.parent / "data" / "data.wt5")
+root = wt.open(here.parent / "data" / "heterostructure.wt5")
 screen = wt.open(here.parent / "fitting" / "screen.wt5")
 logscale = False  # plot spectrum on logscale?
 
@@ -45,7 +45,7 @@ def main(save):
     legend_kwargs = {"loc": "center left", "bbox_to_anchor": (0.06, 0.4), "ncol": 1}
 
     # ws2 ref spectrum
-    ws2 = wt.open(here.parent / "data" / "zyz-554.wt5").raman.corner
+    ws2 = wt.open(here.parent / "data" / "ws2_control.wt5").raman.corner
 
     si_temp = ws2.split("x", [-30])[0].split("wm", [505, 530])[1] # isolate pure substrate
     si_temp.level(0, 0, 5) # remove baseline

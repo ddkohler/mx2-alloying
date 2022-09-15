@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 def run(save):
     here = pathlib.Path(__file__).resolve().parent
     data_dir = here.parent / "data"
-    p = "data.wt5"
+    p = "heterostructure.wt5"
     root = wt.open(data_dir / p)
     pl = root.pl.proc.copy()
 
