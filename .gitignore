@@ -1,5 +1,9 @@
 discussions/*
 manuscript/*
+data/heterostructure
+data/osfstorage
+data/ws2 monolayers
+data/refractive index
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
