@@ -12,7 +12,6 @@ else:
     python = 'python3'
 
 project = "6gxsn"
-here = pathlib.Path(__file__).resolve().parent
 
 
 def print_with_line(s, char='#'):

@@ -21,11 +21,12 @@ This repository hosts the code used for composing the manuscript
 ## folder structure
 
 ### data folder
+- 
 
 ### figures folder
 - `figures.py` generates all figures.  
   - Make sure to set `save=True` to generate pngs
-- Individual scripts are made for each figure.  You can run these scripts to generate specific figures. 
+- Each figure has an individual scripts that creates it.  You can run these scripts to generate specific figures. 
   - e.g. on Windows: `python raman_si.py`
   - For interactive figures (e.g. pyqt), run file with argument 0:
     `python raman_si.py 0`

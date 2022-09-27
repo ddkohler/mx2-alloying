@@ -10,7 +10,6 @@ data_dir = here.parent / "data"
 p = "heterostructure.wt5"
 root = wt.open(data_dir / p)
 mpl.style.use(here / "figures.mplstyle")
-# root.print_tree(2)
 
 cmap = mpl.cm.get_cmap("magma").copy()
 cmap.set_bad("k")
@@ -21,10 +20,8 @@ def run(save):
     x0 = -6  # 12  # x-slice to examine further (um)
 
     d_om = root.pl.om
-    extent = [d_om.x.min(), d_om.x.max(), d_om.y.min() - 1 , d_om.y.max() - 1]
+    extent = [d_om.x.min(), d_om.x.max(), d_om.y.min(), d_om.y.max()]
     img = np.stack([d_om.r, d_om.g, d_om.b], axis=-1)
-
-    # d.transform("energy", "x-y", "x+y")
 
     if True:
         d0 = d.chop("energy", "y", at={"x": [x0, "um"]})[0]
@@ -62,12 +59,6 @@ def run(save):
     ax1 = plt.subplot(gs[0, 1])
     plt.yticks(visible=False)
     ax1.set_yticks([-20, 0, 20])
-    # ax1.text(
-    #     0.05, 0.05,
-    #     r"$x=" + f"{x0}" + r"\ \mathsf{\mu m}$",
-    #     transform=ax1.transAxes,
-    #     bbox=dict(fc="w", ec="k", boxstyle="square", alpha=0.5)
-    # )
     ax1.set_ylim(-30, 30)
     ax1.set_xticks(np.linspace(100, 400, 4))
     y = d0["y"]
@@ -75,7 +66,6 @@ def run(save):
     norm = mpl.colors.LogNorm(vmin=0.01, vmax=1)
     ax1.pcolormesh(d0, channel=channel, cmap=cmap, norm=norm)
 
-    # cax= plt.subplot(gs[0,1])
     ticks = np.linspace(-2, 0, 5)
 
     divider = make_axes_locatable(ax0)
