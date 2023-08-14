@@ -1,0 +1,2 @@
+wright-tools == 4.5
+osfclient == 0.0.5
