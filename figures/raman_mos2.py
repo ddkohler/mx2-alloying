@@ -13,15 +13,19 @@ plt.style.use(here / "figures.mplstyle")
 
 # determines the ranges considered for analyzing E, A modes
 line_splits = [380.7, 387.7, 400.7, 413.7]
+colors = plt.cm.viridis([0.25, 0.6, 1])
 # window for viewing raman shifts
 raman_lims = [150, 480]
 # bins for splitting energy (for color coding)
 splits = [22.8, 24.5]  # [22.8, 25]
+facecolor = [0.95] * 3
+scatter_kwargs = dict(alpha=0.7, s=15, edgecolors=[0.5] * 3)
+
+from matplotlib.colors import from_levels_and_colors
+group_color, group = from_levels_and_colors(splits, colors, extend="both")
+group_color = group_color.with_extremes(bad=facecolor)
 
 d = root.raman.proc
-# out = wt.artists.interact2D(d)
-# plt.show()
-# 1/0
 
 
 def main(save):
@@ -62,17 +66,6 @@ def main(save):
     eprime = modes[1]
     a1prime = modes[3]
 
-    if False:  # investigate individual spectra
-        figa = plt.figure()
-        ax = plt.subplot(111)
-        spot1 = mos2.chop("energy", at={"x":[0, "um"], "y":[20, "um"]})[0]
-        spot2 = mos2.chop("energy", at={"x":[-20, "um"], "y":[14, "um"]})[0]
-        spot3 = mos2.chop("energy", at={"x":[0, "um"], "y":[40, "um"]})[0]
-        ax.plot(spot1.energy.points, spot1.intensity[:])
-        ax.plot(spot2.energy.points, spot2.intensity[:])
-        ax.plot(spot3.energy.points, spot3.intensity[:])
-        plt.show()
-
     mos2.create_channel("we", values=eprime.channels[-1].points[None, :, :])
     mos2.create_channel("wa", values=a1prime.channels[-1].points[None, :, :])
 
@@ -89,28 +82,14 @@ def main(save):
         aspects=[[[0,0], 0.1], [[1,0], 1], [[2,0], 0.1], [[3,0], 1]]
     )
 
-    # assemble
-    channel = (a1prime.channels[-1][:] - eprime.channels[-1][:]).flatten()
-    colors = plt.cm.viridis([0, 0.5, 1])
-
-    # plot
+    # correlation plot of A, E mode frequencies
     ax0 = plt.subplot(gs[3,0])
-    scatter_color = []
-    for i in range(len(channel)):
-        if channel[i] < splits[0]:
-            scatter_color.append(colors[0])
-        elif channel[i] > splits[1]:
-            scatter_color.append(colors[2])
-        else:
-            scatter_color.append(colors[1])
 
     ax0.scatter(
         a1prime.channels[-1][:].flatten(),
         eprime.channels[-1][:].flatten(),
-        s=10,
-        color=scatter_color,
-        linewidths=0,
-        alpha=0.7
+        color = [i for i in map(group_color, group(splitting.flatten()))],
+        **scatter_kwargs
     )
 
     ax0.set_xlabel(r"$\bar{\nu}_{A_1} \ \left( \mathsf{cm}^{-1} \right)$")
@@ -118,31 +97,31 @@ def main(save):
 
     wt.artists.corner_text("d")
     ax0.set_yticks([382, 383, 384, 385])
-    ax0.set_ylim(382, 385.5)
-    
-    ax1 = plt.subplot(gs[3,1])
-    plt.yticks(visible=False)
-    # ax1.vlines([18.8, 21.5, 23.3], ymin=0, ymax=50, color="goldenrod")
-    bins = np.linspace(21, 26, 51)
-    for bini, colori in zip(
-        [
-            [b for b in bins if b < splits[0]],
-            [b for b in bins if (b > splits[0] and b < splits[1])],
-            [b for b in bins if b > splits[1]]
-        ],
-        [colors[0], colors[1], colors[2]]
-    ):
-        bini.append(bini[-1] + 0.1)
-        bini.append(bini[-1] + 0.1)
-        ax1.hist(
-            channel,
-            bins=bini,
-            color=colori,
-            alpha=1
-        )    
-    ax1.set_ylim(0, 50)
-    ax1.set_xlabel(r"$\bar{\nu}_{A_1^\prime}-\bar{\nu}_{E^\prime} \ \left( \mathsf{cm}^{-1} \right)$")
+    ax0.set_ylim(382.5, 385.5)
+    ax0.set_xlim(405, 409.2)
+
+
+    sub_gs = gs[3,1].subgridspec(1, 4)
+    ax1 = fig.add_subplot(sub_gs[0,1:])
     wt.artists.corner_text("e")
+
+    temp = root.pl.proc
+    temp.create_variable("mos2", values=mos2_screen[None, :, :])
+    pl = temp.split("mos2", [0.5])[1]
+    x = mos2.splitting[0].flatten()
+    y = pl.intensity_energy_moment_1[0].flatten()
+
+    ax1.scatter(
+        x.flatten(),
+        y.flatten(),
+        color=[color for color in map(group_color, group(x))],
+        **scatter_kwargs
+    )
+    ax1.set_ylabel(r"$\langle \hbar\omega \rangle_\mathsf{PL} \ (\mathsf{eV})$")
+    ax1.set_xlabel(r"$A_1^\prime - E^\prime \ \mathsf{splitting} \ (\mathsf{cm}^{-1}$)")
+
+    plt.ylim(1.82, 1.85)
+    ax1.grid(True)
 
     ax2 = plt.subplot(gs[3, 2])
     ax2_inset = ax2.inset_axes([0.1, 0.6, 0.5, 0.35])
@@ -159,67 +138,109 @@ def main(save):
     ax2_inset.set_xlim(375, 420)
     ax2_inset.set_xticks([385, 405])
     ax2_inset.set_yticks([])
-    # ax2_inset.set_yticklabels([None for _ in ax2_inset.get_yticklabels()])
-
-    for ax in [ax2, ax2_inset, ax1, ax0]:
-        ax.set_facecolor([0.95] * 3)
-        ax.grid(c="k", ls=":")
 
     wt.artists.corner_text("f")
     ax2.set_xlabel(r"$\mathsf{Raman \ shift} \ \left( \mathsf{cm}^{-1} \right)$")
     ax2.set_ylabel("average signal (a.u.)")
 
-    for col, channel, ticks, label, vlim in zip(
+    for col, channel, ticks, label, cmap, vlim in zip(
         [0, 1, 2],
         ["we", "wa", "splitting"],
         [np.linspace(382.5, 384.5, 5), np.linspace(400, 410, 11), np.linspace(20, 25, 6)],
         [
             r"$E_1^\prime \ \mathsf{mode} \ \left( \mathsf{cm}^{-1} \right)$",
             r"$A_1 \ \mathsf{mode} \ \left( \mathsf{cm}^{-1} \right)$",
-            r"$\mathsf{splitting} \ \left( \mathsf{cm}^{-1} \right)$"
+            r"$A_1 - E_1^\prime \ \mathsf{splitting} \ \left( \mathsf{cm}^{-1} \right)$"
         ],
+        [plt.cm.viridis_r, plt.cm.viridis, plt.cm.viridis],
         [
             [382.7, 384.7], [405, 409], [20.5, 25.5]
         ],
     ):
+        if col == 2:  # mode splitting map is now a unique set of instructions
+            continue
 
-        # vlim = [
-        #     np.nanmin(mos2.channels[wt.kit.get_index(mos2.channel_names, channel)].points),
-        #     np.nanmax(mos2.channels[wt.kit.get_index(mos2.channel_names, channel)].points)
-        # ]
         axi = plt.subplot(gs[1, col])
         axi.set_yticks([-20, 0, 20, 40])
         if col > 0:
             plt.yticks(visible=False)
 
-        cmap = plt.cm.viridis if col !=0 else plt.cm.viridis_r
-        cmap = cmap.with_extremes(over=cmap(1.), under=cmap(0.), bad=[0.9] * 3)
+        cmap = cmap.with_extremes(over=cmap(1.), under=cmap(0.), bad=facecolor)
+        kwargs = dict(cmap=cmap, vmin=vlim[0], vmax=vlim[1])
 
-        axi.pcolormesh(
-            mos2,
-            channel=channel,
-            cmap=cmap,
-            vmin=vlim[0],
-            vmax=vlim[1]
-        )
+        axi.pcolormesh(mos2, channel=channel, **kwargs)
 
         caxi = plt.subplot(gs[0, col])
         wt.artists.plot_colorbar(
             caxi,
             cmap=cmap,
             orientation="horizontal",
-            vlim=vlim,
             ticks=ticks,
             label=label,
+            vlim=vlim,
             tick_fontsize=12,
-            label_fontsize=14
+            label_fontsize=14,
         )
         axi.set_xlabel(r"$x \ \left(\mathsf{\mu m} \right)$")
         axi.set_ylabel(None if col > 0 else r"$y \ \left(\mathsf{\mu m} \right)$")
         caxi.xaxis.set_label_position('top')
         caxi.xaxis.set_ticks_position('top')
         wt.artists.corner_text("abc"[col], ax=axi)
- 
+
+    # mode splitting spatial map
+    ax_groups = plt.subplot(gs[1, 2])
+    ax_groups.set_yticks([-20, 0, 20, 40])
+    ax_groups.set_xlabel(r"$x \ \left(\mathsf{\mu m} \right)$")
+    plt.yticks(visible=False)
+
+    cmap, norm = group_color, group
+    kwargs = dict(cmap=cmap, norm=norm)
+    ax_groups.pcolormesh(mos2, channel="splitting", **kwargs)
+    wt.artists.corner_text("c", ax=ax_groups)
+
+    cax_groups = plt.subplot(gs[0, 2])
+    from matplotlib import colorbar
+    cb = colorbar.ColorbarBase(
+        cax_groups,
+        cmap=cmap,
+        norm=norm,
+        orientation="horizontal",
+        label=r"$A_1 - E_1^\prime \ \mathsf{splitting} \ \left( \mathsf{cm}^{-1} \right)$",
+        extendfrac=0.67,
+        extendrect=True,
+        ticklocation="top",
+    )
+    cb.ax.tick_params(labelsize=12)
+    cb.set_label(label, fontsize=14)
+
+    ax0a = ax_groups.inset_axes([0.7, 0.7, 0.4, 0.3])
+    ax0a.set_yticks([])
+    bins = np.linspace(21, 26, 51)
+    for bini, colori in zip(
+        [
+            [b for b in bins if b < splits[0]],
+            [b for b in bins if (b > splits[0] and b < splits[1])],
+            [b for b in bins if b > splits[1]]
+        ],
+        colors
+    ):
+        bini.append(bini[-1] + 0.1)
+        bini.append(bini[-1] + 0.1)
+        ax0a.hist(
+            splitting.flatten(),
+            bins=bini,
+            color=colori,
+            alpha=1
+        )
+    ax0a.set_ylim(0, 45)
+    ax0a.set_xticks([22, 24, 26])
+    ax0a.grid(True, axis="x")
+    # ax0a.set_title(r"$\Delta\bar{\nu}_{A_1^\prime E^\prime} \ \left( \mathsf{cm}^{-1} \right)$", fontsize=14)
+
+    for ax in [ax2, ax2_inset, ax1, ax0, ax0a]:
+        ax.set_facecolor(facecolor)
+        ax.grid(c="k", ls=":")
+
     if save:
         p = r"raman_mos2.png"
         p = here / p
