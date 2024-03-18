@@ -1,7 +1,8 @@
 # mx2-alloying
 
-This repository hosts the code used for composing the manuscript 
-"Spatially-resolved spectroscopy of MoS2-WS2 lateral heterostructures" (working title).
+![toc_image](https://pubs.acs.org/cms/10.1021/acs.jpclett.3c02407/asset/images/medium/jz3c02407_0007.gif)
+
+This repository hosts the code used in the article [Photoluminescence, Reflection Contrast, Raman, and Second Harmonic Generation Spectroscopies Spatially Resolve Strain, Alloying, Defects, and Electronic Characteristics of Lateral MX2 Heterostructures](https://doi.org/10.1021/acs.jpclett.3c02407)
 
 ## build instructions
 - You will need the following packages
